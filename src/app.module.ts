@@ -8,6 +8,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CompaniesModule } from './companies/companies.module';
+import { CompanyContactsModule } from './company-contacts/company-contacts.module';
 import { DocumentsModule } from './documents/documents.module';
 import { ApprovalsModule } from './approvals/approvals.module';
 
@@ -34,6 +35,7 @@ import { ApprovalsModule } from './approvals/approvals.module';
     AuthModule,
     UsersModule,
     CompaniesModule,
+    CompanyContactsModule,
     DocumentsModule,
     ApprovalsModule,
   ],
