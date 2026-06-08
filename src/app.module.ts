@@ -11,6 +11,7 @@ import { CompaniesModule } from './companies/companies.module';
 import { CompanyContactsModule } from './company-contacts/company-contacts.module';
 import { DocumentsModule } from './documents/documents.module';
 import { ApprovalsModule } from './approvals/approvals.module';
+import { TasksModule } from './tasks/tasks.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ApprovalsModule } from './approvals/approvals.module';
     CompanyContactsModule,
     DocumentsModule,
     ApprovalsModule,
+    TasksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
