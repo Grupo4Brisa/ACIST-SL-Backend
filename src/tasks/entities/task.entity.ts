@@ -14,7 +14,9 @@ export class Task {
   @Column()
   assignedTo!: number;
 
-  @Column()
+  @Column({
+    type: 'date',
+  })
   dueDate!: Date;
 
   @Column({
@@ -27,4 +29,10 @@ export class Task {
     default: () => 'CURRENT_TIMESTAMP',
   })
   createdAt!: Date;
+
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  updatedAt!: Date;
 }
