@@ -13,6 +13,7 @@ import { DocumentsModule } from './documents/documents.module';
 import { ApprovalsModule } from './approvals/approvals.module';
 import { TasksModule } from './tasks/tasks.module';
 import { PaymentsModule } from './payments/payments.module';
+import { TermsAcceptanceModule } from './terms-acceptance/terms-acceptance.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { PaymentsModule } from './payments/payments.module';
     ApprovalsModule,
     TasksModule,
     PaymentsModule,
+    TermsAcceptanceModule,
   ],
   controllers: [AppController],
   providers: [AppService],
