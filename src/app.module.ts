@@ -14,6 +14,7 @@ import { ApprovalsModule } from './approvals/approvals.module';
 import { TasksModule } from './tasks/tasks.module';
 import { PaymentsModule } from './payments/payments.module';
 import { TermsAcceptanceModule } from './terms-acceptance/terms-acceptance.module';
+import { SolutionsModule } from './solutions/solutions.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { TermsAcceptanceModule } from './terms-acceptance/terms-acceptance.modul
     TasksModule,
     PaymentsModule,
     TermsAcceptanceModule,
+    SolutionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
