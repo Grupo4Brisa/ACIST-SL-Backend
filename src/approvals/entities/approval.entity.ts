@@ -19,7 +19,7 @@ export class Approval {
   @Column({
     nullable: true,
   })
-  observation!: string;
+  observation?: string;
 
   @Column({
     type: 'timestamp',

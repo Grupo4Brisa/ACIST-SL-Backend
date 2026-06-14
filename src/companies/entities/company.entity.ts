@@ -53,7 +53,10 @@ export class Company {
   @Column({ nullable: true })
   employeesCount?: number;
 
-  @Column({ nullable: true })
+  @Column({
+    type: 'date',
+    nullable: true,
+  })
   foundationDate?: Date;
 
   @Column({
@@ -66,4 +69,22 @@ export class Company {
     default: 'INCOMPLETE',
   })
   status!: string;
+
+  @Column({
+    type: 'date',
+    nullable: true,
+  })
+  associationDate?: Date;
+
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  createdAt!: Date;
+
+  @Column({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
+  updatedAt!: Date;
 }

@@ -34,4 +34,6 @@ export class CreateCompanyDto {
   foundationDate?: Date;
 
   eventPresentation?: string;
+
+  associationDate?: Date;
 }
