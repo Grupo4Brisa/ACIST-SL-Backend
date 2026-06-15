@@ -16,6 +16,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { TermsAcceptanceModule } from './terms-acceptance/terms-acceptance.module';
 import { SolutionsModule } from './solutions/solutions.module';
 import { CompanySolutionsModule } from './company-solutions/company-solutions.module';
+import { SocialNetworksModule } from './social-networks/social-networks.module';
 
 @Module({
   imports: [
@@ -48,6 +49,7 @@ import { CompanySolutionsModule } from './company-solutions/company-solutions.mo
     TermsAcceptanceModule,
     SolutionsModule,
     CompanySolutionsModule,
+    SocialNetworksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
