@@ -17,6 +17,7 @@ import { TermsAcceptanceModule } from './terms-acceptance/terms-acceptance.modul
 import { SolutionsModule } from './solutions/solutions.module';
 import { CompanySolutionsModule } from './company-solutions/company-solutions.module';
 import { EventsModule } from './events/events.module';
+import { SocialNetworksModule } from './social-networks/social-networks.module';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { EventsModule } from './events/events.module';
     SolutionsModule,
     CompanySolutionsModule,
     EventsModule,
+    SocialNetworksModule,
   ],
   controllers: [AppController],
   providers: [AppService],
