@@ -18,6 +18,7 @@ import { SolutionsModule } from './solutions/solutions.module';
 import { CompanySolutionsModule } from './company-solutions/company-solutions.module';
 import { EventsModule } from './events/events.module';
 import { SocialNetworksModule } from './social-networks/social-networks.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { SocialNetworksModule } from './social-networks/social-networks.module';
     CompanySolutionsModule,
     EventsModule,
     SocialNetworksModule,
+    AnnouncementsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

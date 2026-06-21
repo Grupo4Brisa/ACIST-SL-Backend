@@ -5,9 +5,7 @@ import { CreateSocialNetworkDto } from './dto/create-social-network.dto';
 
 @Controller('social-networks')
 export class SocialNetworksController {
-  constructor(
-    private readonly socialNetworksService: SocialNetworksService,
-  ) {}
+  constructor(private readonly socialNetworksService: SocialNetworksService) {}
 
   @Get()
   findAll() {

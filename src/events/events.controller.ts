@@ -5,9 +5,7 @@ import { CreateEventDto } from './dto/create-event.dto';
 
 @Controller('events')
 export class EventsController {
-  constructor(
-    private readonly eventsService: EventsService,
-  ) {}
+  constructor(private readonly eventsService: EventsService) {}
 
   @Get()
   findAll() {
