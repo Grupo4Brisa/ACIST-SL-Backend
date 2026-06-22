@@ -1,7 +1,17 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
+} from '@nestjs/common';
 
 import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
+import { UpdateDocumentDto } from './dto/update-document.dto';
 
 @Controller('documents')
 export class DocumentsController {
@@ -12,8 +22,37 @@ export class DocumentsController {
     return this.documentsService.findAll();
   }
 
+  @Get(':id')
+  findOne(
+    @Param('id', ParseIntPipe)
+    id: number,
+  ) {
+    return this.documentsService.findOne(id);
+  }
+
   @Post()
-  create(@Body() body: CreateDocumentDto) {
+  create(
+    @Body()
+    body: CreateDocumentDto,
+  ) {
     return this.documentsService.create(body);
   }
+
+  @Patch(':id')
+  update(
+    @Param('id', ParseIntPipe)
+    id: number,
+
+    @Body()
+    body: UpdateDocumentDto,
+  ) {
+    return this.documentsService.update(id, body);
+  }
+
+  @Delete(':id')
+  remove(
+    @Param('id', ParseIntPipe)
+    id: number,
+  ) {return this.documentsService.remove(id);
+}
 }
