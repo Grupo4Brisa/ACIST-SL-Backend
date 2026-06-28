@@ -17,6 +17,7 @@ import { TermsAcceptanceModule } from './terms-acceptance/terms-acceptance.modul
 import { SolutionsModule } from './solutions/solutions.module';
 import { CompanySolutionsModule } from './company-solutions/company-solutions.module';
 import { EventsModule } from './events/events.module';
+import { EventRegistrationsModule } from './event-registrations/event-registrations.module';
 import { SocialNetworksModule } from './social-networks/social-networks.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 
@@ -52,6 +53,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
     SolutionsModule,
     CompanySolutionsModule,
     EventsModule,
+    EventRegistrationsModule,
     SocialNetworksModule,
     AnnouncementsModule,
   ],
