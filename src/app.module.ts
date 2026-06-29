@@ -20,6 +20,7 @@ import { EventsModule } from './events/events.module';
 import { EventRegistrationsModule } from './event-registrations/event-registrations.module';
 import { SocialNetworksModule } from './social-networks/social-networks.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
+import { LoginTokensModule } from './login-tokens/login-tokens.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
     EventRegistrationsModule,
     SocialNetworksModule,
     AnnouncementsModule,
+    LoginTokensModule,
   ],
   controllers: [AppController],
   providers: [AppService],
