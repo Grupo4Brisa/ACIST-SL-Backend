@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 
 import { TermsAcceptance } from './entities/terms-acceptance.entity';
 import { CreateTermsAcceptanceDto } from './dto/create-terms-acceptance.dto';
+import { UpdateTermsAcceptanceDto } from './dto/update-terms-acceptance.dto';
 
 @Injectable()
 export class TermsAcceptanceService {
@@ -16,6 +17,10 @@ export class TermsAcceptanceService {
     return this.termsAcceptanceRepository.find();
   }
 
+  findOne(id: number) {
+    return this.termsAcceptanceRepository.findOneBy({ id });
+  }
+
   create(data: CreateTermsAcceptanceDto) {
     const acceptance = this.termsAcceptanceRepository.create({
       ...data,
@@ -23,5 +28,13 @@ export class TermsAcceptanceService {
     });
 
     return this.termsAcceptanceRepository.save(acceptance);
+  }
+
+  update(id: number, data: UpdateTermsAcceptanceDto) {
+    return this.termsAcceptanceRepository.update(id, data);
+  }
+
+  remove(id: number) {
+    return this.termsAcceptanceRepository.delete(id);
   }
 }
