@@ -8,39 +8,52 @@ import {
   Delete,
 } from '@nestjs/common';
 
+import {
+  ApiTags,
+  ApiOperation,
+  ApiParam,
+} from '@nestjs/swagger';
+
 import { SolutionsService } from './solutions.service';
 import { CreateSolutionDto } from './dto/create-solution.dto';
 import { UpdateSolutionDto } from './dto/update-solution.dto';
 
+@ApiTags('Solutions')
 @Controller('solutions')
 export class SolutionsController {
-  constructor(private readonly solutionsService: SolutionsService) {}
+  constructor(private readonly service: SolutionsService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Listar soluções' })
   findAll() {
-    return this.solutionsService.findAll();
-  }
-
-  @Post()
-  create(@Body() body: CreateSolutionDto) {
-    return this.solutionsService.create(body);
+    return this.service.findAll();
   }
 
   @Get(':id')
+  @ApiOperation({ summary: 'Buscar solução por ID' })
+  @ApiParam({ name: 'id', example: 1 })
   findOne(@Param('id') id: string) {
-    return this.solutionsService.findOne(Number(id));
+    return this.service.findOne(+id);
+  }
+
+  @Post()
+  @ApiOperation({ summary: 'Criar solução' })
+  create(@Body() body: CreateSolutionDto) {
+    return this.service.create(body);
   }
 
   @Patch(':id')
+  @ApiOperation({ summary: 'Atualizar solução' })
   update(
     @Param('id') id: string,
     @Body() body: UpdateSolutionDto,
   ) {
-    return this.solutionsService.update(Number(id), body);
+    return this.service.update(+id, body);
   }
 
   @Delete(':id')
+  @ApiOperation({ summary: 'Remover solução' })
   remove(@Param('id') id: string) {
-    return this.solutionsService.remove(Number(id));
+    return this.service.remove(+id);
   }
 }

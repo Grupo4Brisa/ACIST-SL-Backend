@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -10,35 +14,78 @@ import { UpdateEventRegistrationDto } from './dto/update-event-registration.dto'
 export class EventRegistrationsService {
   constructor(
     @InjectRepository(EventRegistration)
-    private readonly eventRegistrationRepository: Repository<EventRegistration>,
+    private readonly repo: Repository<EventRegistration>,
   ) {}
 
+  // =========================
+  // FIND ALL
+  // =========================
   findAll() {
-    return this.eventRegistrationRepository.find();
+    return this.repo.find();
   }
 
-  findOne(id: number) {
-    return this.eventRegistrationRepository.findOneBy({ id });
+  // =========================
+  // FIND ONE
+  // =========================
+  async findOne(id: number) {
+    const reg = await this.repo.findOne({ where: { id } });
+
+    if (!reg) {
+      throw new NotFoundException('Registro não encontrado');
+    }
+
+    return reg;
   }
 
-  create(eventRegistrationData: CreateEventRegistrationDto) {
-    const eventRegistration =
-      this.eventRegistrationRepository.create(eventRegistrationData);
+  // =========================
+  // CREATE (COM REGRA DE DUPLICIDADE)
+  // =========================
+  async create(data: CreateEventRegistrationDto) {
+    const exists = await this.repo.findOne({
+      where: {
+        eventId: data.eventId,
+        companyId: data.companyId,
+      },
+    });
 
-    return this.eventRegistrationRepository.save(eventRegistration);
+    if (exists) {
+      throw new ConflictException(
+        'Empresa já está registrada neste evento',
+      );
+    }
+
+    const registration = this.repo.create({
+      ...data,
+      status: 'REGISTERED',
+    });
+
+    return this.repo.save(registration);
   }
 
-  update(
+  // =========================
+  // UPDATE
+  // =========================
+  async update(
     id: number,
-    eventRegistrationData: UpdateEventRegistrationDto,
+    data: UpdateEventRegistrationDto,
   ) {
-    return this.eventRegistrationRepository.update(
-      id,
-      eventRegistrationData,
-    );
+    const reg = await this.findOne(id);
+
+    const updated = this.repo.merge(reg, data);
+
+    return this.repo.save(updated);
   }
 
-  remove(id: number) {
-    return this.eventRegistrationRepository.delete(id);
+  // =========================
+  // DELETE
+  // =========================
+  async remove(id: number) {
+    const reg = await this.findOne(id);
+
+    await this.repo.delete(id);
+
+    return {
+      message: 'Registro removido com sucesso',
+    };
   }
 }

@@ -1,8 +1,4 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity('events')
 export class Event {
@@ -12,24 +8,16 @@ export class Event {
   @Column()
   title!: string;
 
-  @Column('text', {
-    nullable: true,
-  })
+  @Column('text', { nullable: true })
   description?: string;
 
-  @Column({
-    nullable: true,
-  })
+  @Column({ type: 'timestamp', nullable: true })
   eventDate?: Date;
 
-  @Column({
-    nullable: true,
-  })
+  @Column({ nullable: true })
   location?: string;
 
-  @Column({
-    nullable: true,
-  })
+  @Column({ nullable: true })
   vacancies?: number;
 
   @Column({

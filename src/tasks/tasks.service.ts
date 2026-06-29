@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -10,28 +15,92 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 export class TasksService {
   constructor(
     @InjectRepository(Task)
-    private readonly taskRepository: Repository<Task>,
+    private readonly repository: Repository<Task>,
   ) {}
 
+  // =========================
+  // LISTAR
+  // =========================
+
   findAll() {
-    return this.taskRepository.find();
+    return this.repository.find();
   }
 
-  create(taskData: CreateTaskDto) {
-    const task = this.taskRepository.create(taskData);
+  // =========================
+  // BUSCAR
+  // =========================
 
-    return this.taskRepository.save(task);
+  async findOne(id: number) {
+    const task = await this.repository.findOne({
+      where: { id },
+    });
+
+    if (!task) {
+      throw new NotFoundException(
+        'Tarefa não encontrada',
+      );
+    }
+
+    return task;
   }
 
-  findOne(id: number) {
-    return this.taskRepository.findOneBy({ id });
+  // =========================
+  // CREATE
+  // =========================
+
+  async create(data: CreateTaskDto) {
+    if (new Date(data.dueDate).getTime() < Date.now()) {
+      throw new BadRequestException(
+        'A data limite não pode estar no passado',
+      );
+    }
+
+    const task = this.repository.create({
+      ...data,
+      status: 'PENDING',
+    });
+
+    return this.repository.save(task);
   }
 
-  update(id: number, taskData: UpdateTaskDto) {
-    return this.taskRepository.update(id, taskData);
+  // =========================
+  // UPDATE
+  // =========================
+
+  async update(
+    id: number,
+    data: UpdateTaskDto,
+  ) {
+    const task = await this.findOne(id);
+
+    if (
+      data.dueDate &&
+      new Date(data.dueDate).getTime() < Date.now()
+    ) {
+      throw new BadRequestException(
+        'A data limite não pode estar no passado',
+      );
+    }
+
+    const updated = this.repository.merge(
+      task,
+      data,
+    );
+
+    return this.repository.save(updated);
   }
 
-  remove(id: number) {
-    return this.taskRepository.delete(id);
+  // =========================
+  // DELETE
+  // =========================
+
+  async remove(id: number) {
+    await this.findOne(id);
+
+    await this.repository.delete(id);
+
+    return {
+      message: 'Tarefa removida com sucesso',
+    };
   }
 }

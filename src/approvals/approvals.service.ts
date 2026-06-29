@@ -24,29 +24,18 @@ export class ApprovalsService {
   }
 
   create(approvalData: CreateApprovalDto) {
-    const approval =
-      this.approvalRepository.create(approvalData);
-
+    const approval = this.approvalRepository.create(approvalData);
     return this.approvalRepository.save(approval);
   }
 
-  async update(
-    id: number,
-    updateApprovalDto: UpdateApprovalDto,
-  ) {
-    await this.approvalRepository.update(
-      id,
-      updateApprovalDto,
-    );
-
+  async update(id: number, updateApprovalDto: UpdateApprovalDto) {
+    await this.approvalRepository.update(id, updateApprovalDto);
     return this.findOne(id);
   }
 
   async remove(id: number) {
     await this.approvalRepository.delete(id);
 
-    return {
-      message: 'Aprovação removida com sucesso',
-    };
+    return { message: 'Aprovação removida com sucesso' };
   }
 }

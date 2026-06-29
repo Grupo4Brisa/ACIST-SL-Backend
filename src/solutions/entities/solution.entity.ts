@@ -5,15 +5,10 @@ export class Solution {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({
-    unique: true,
-  })
+  @Column({ unique: true })
   name!: string;
 
-  @Column({
-    type: 'text',
-    nullable: true,
-  })
+  @Column({ type: 'text', nullable: true })
   description?: string;
 
   @Column({

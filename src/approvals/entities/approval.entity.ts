@@ -1,29 +1,31 @@
+import { ApiProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { ApprovalStatus } from '../approval-status.enum';
 
 @Entity('approvals')
 export class Approval {
+  @ApiProperty()
   @PrimaryGeneratedColumn()
   id!: number;
 
+  @ApiProperty()
   @Column()
   companyId!: number;
 
+  @ApiProperty()
   @Column()
   approvedBy!: number;
 
-  @Column({
-    default: 'PENDING',
-  })
-  status!: string;
+  @ApiProperty({ enum: ApprovalStatus })
+  @Column({ type: 'enum', enum: ApprovalStatus, default: ApprovalStatus.PENDING })
+  status!: ApprovalStatus;
 
-  @Column({
-    nullable: true,
-  })
+  @ApiProperty({ required: false })
+  @Column({ nullable: true })
   observation?: string;
 
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
+  @ApiProperty()
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;
 }
+

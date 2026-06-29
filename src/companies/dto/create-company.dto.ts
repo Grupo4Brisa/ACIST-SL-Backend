@@ -1,39 +1,35 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
+
 export class CreateCompanyDto {
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   companyName!: string;
 
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   corporateName!: string;
 
-  cnpj!: string;
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
+  @Matches(/^\d{11}$|^\d{14}$/)
+  cnpjcpf!: string;
 
+  @ApiProperty()
+  @IsEmail()
+  @IsNotEmpty()
   email!: string;
 
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   phone!: string;
 
+  @ApiProperty()
+  @IsString()
+  @IsNotEmpty()
   companySize!: string;
-
-  stateRegistration?: string;
-
-  website?: string;
-
-  address?: string;
-
-  neighborhood?: string;
-
-  city?: string;
-
-  state?: string;
-
-  zipCode?: string;
-
-  establishmentType?: string;
-
-  headquartersType?: string;
-
-  employeesCount?: number;
-
-  foundationDate?: Date;
-
-  eventPresentation?: string;
-
-  associationDate?: Date;
 }

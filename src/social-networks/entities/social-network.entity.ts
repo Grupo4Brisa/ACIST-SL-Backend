@@ -5,26 +5,18 @@ export class SocialNetwork {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column()
+  @Column({ unique: true })
   companyId!: number;
 
-  @Column({
-    nullable: true,
-  })
-  facebook!: string;
+  @Column({ nullable: true })
+  facebook?: string;
 
-  @Column({
-    nullable: true,
-  })
-  instagram!: string;
+  @Column({ nullable: true })
+  instagram?: string;
 
-  @Column({
-    nullable: true,
-  })
-  linkedin!: string;
+  @Column({ nullable: true })
+  linkedin?: string;
 
-  @Column({
-    nullable: true,
-  })
-  other!: string;
+  @Column({ nullable: true })
+  other?: string;
 }

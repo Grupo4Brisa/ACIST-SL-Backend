@@ -1,11 +1,31 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+
 export class CreateSocialNetworkDto {
+  @ApiProperty({ example: 1 })
+  @Type(() => Number)
+  @IsInt()
+  @IsNotEmpty()
   companyId!: number;
 
-  facebook!: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  facebook?: string;
 
-  instagram!: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  instagram?: string;
 
-  linkedin!: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  linkedin?: string;
 
-  other!: string;
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  other?: string;
 }

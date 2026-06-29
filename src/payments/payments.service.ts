@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -13,36 +18,99 @@ export class PaymentsService {
     private readonly paymentRepository: Repository<Payment>,
   ) {}
 
+  // =========================
+  // LISTAR
+  // =========================
+
   findAll() {
     return this.paymentRepository.find();
   }
 
-  findOne(id: number) {
-    return this.paymentRepository.findOne({
+  // =========================
+  // BUSCAR
+  // =========================
+
+  async findOne(id: number) {
+    const payment = await this.paymentRepository.findOne({
       where: { id },
     });
+
+    if (!payment) {
+      throw new NotFoundException(
+        'Pagamento não encontrado',
+      );
+    }
+
+    return payment;
   }
 
-  create(paymentData: CreatePaymentDto) {
-    const payment =
-      this.paymentRepository.create(paymentData);
+  // =========================
+  // CREATE
+  // =========================
+
+  async create(data: CreatePaymentDto) {
+    if (data.amount <= 0) {
+      throw new BadRequestException(
+        'O valor deve ser maior que zero',
+      );
+    }
+
+    const payment = this.paymentRepository.create({
+      ...data,
+      status: 'PENDING',
+    });
 
     return this.paymentRepository.save(payment);
   }
 
+  // =========================
+  // UPDATE
+  // =========================
+
   async update(
     id: number,
-    updatePaymentDto: UpdatePaymentDto,
+    data: UpdatePaymentDto,
   ) {
-    await this.paymentRepository.update(
-      id,
-      updatePaymentDto,
+    const payment = await this.findOne(id);
+
+    if (data.amount !== undefined && data.amount <= 0) {
+      throw new BadRequestException(
+        'O valor deve ser maior que zero',
+      );
+    }
+
+    if (
+      data.status &&
+      data.status.toUpperCase() === 'PAID'
+    ) {
+      data.paidAt ??= new Date();
+    }
+
+    if (
+      data.paidAt &&
+      data.status &&
+      data.status.toUpperCase() !== 'PAID'
+    ) {
+      throw new BadRequestException(
+        'paidAt só pode ser informado quando o status for PAID',
+      );
+    }
+
+    const updated = this.paymentRepository.merge(
+      payment,
+      data,
     );
 
-    return this.findOne(id);
+    return this.paymentRepository.save(updated);
   }
 
+  // =========================
+  // DELETE
+  // =========================
+
   async remove(id: number) {
+    await this.findOne(id);
+
     await this.paymentRepository.delete(id);
 
     return {

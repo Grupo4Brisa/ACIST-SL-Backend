@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -10,28 +14,77 @@ import { UpdateSolutionDto } from './dto/update-solution.dto';
 export class SolutionsService {
   constructor(
     @InjectRepository(Solution)
-    private readonly solutionRepository: Repository<Solution>,
+    private readonly repo: Repository<Solution>,
   ) {}
 
+  // =========================
+  // LISTAR
+  // =========================
   findAll() {
-    return this.solutionRepository.find();
+    return this.repo.find();
   }
 
-  create(solutionData: CreateSolutionDto) {
-    const solution = this.solutionRepository.create(solutionData);
+  // =========================
+  // BUSCAR POR ID
+  // =========================
+  async findOne(id: number) {
+    const solution = await this.repo.findOne({ where: { id } });
 
-    return this.solutionRepository.save(solution);
+    if (!solution) {
+      throw new NotFoundException('Solution não encontrada');
+    }
+
+    return solution;
   }
 
-  findOne(id: number) {
-    return this.solutionRepository.findOneBy({ id });
+  // =========================
+  // CREATE (NOME ÚNICO)
+  // =========================
+  async create(data: CreateSolutionDto) {
+    const exists = await this.repo.findOne({
+      where: { name: data.name },
+    });
+
+    if (exists) {
+      throw new ConflictException('Já existe uma solution com esse nome');
+    }
+
+    const solution = this.repo.create(data);
+
+    return this.repo.save(solution);
   }
 
-  update(id: number, solutionData: UpdateSolutionDto) {
-    return this.solutionRepository.update(id, solutionData);
+  // =========================
+  // UPDATE
+  // =========================
+  async update(id: number, data: UpdateSolutionDto) {
+    const solution = await this.findOne(id);
+
+    if (data.name) {
+      const exists = await this.repo.findOne({
+        where: { name: data.name },
+      });
+
+      if (exists && exists.id !== id) {
+        throw new ConflictException('Nome já está em uso');
+      }
+    }
+
+    const updated = this.repo.merge(solution, data);
+
+    return this.repo.save(updated);
   }
 
-  remove(id: number) {
-    return this.solutionRepository.delete(id);
+  // =========================
+  // DELETE
+  // =========================
+  async remove(id: number) {
+    const solution = await this.findOne(id);
+
+    await this.repo.delete(id);
+
+    return {
+      message: 'Solution removida com sucesso',
+    };
   }
 }

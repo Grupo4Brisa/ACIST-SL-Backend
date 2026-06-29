@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -10,25 +10,36 @@ import { UpdateCompanySolutionDto } from './dto/update-company-solution.dto';
 export class CompanySolutionsService {
   constructor(
     @InjectRepository(CompanySolution)
-    private readonly companySolutionRepository: Repository<CompanySolution>,
+    private readonly repo: Repository<CompanySolution>,
   ) {}
 
   // CREATE
   async create(data: CreateCompanySolutionDto) {
-    const entity = this.companySolutionRepository.create(data);
-    return this.companySolutionRepository.save(entity);
+    const exists = await this.repo.findOne({
+      where: {
+        companyId: data.companyId,
+        solutionId: data.solutionId,
+      },
+    });
+
+    if (exists) {
+      throw new BadRequestException(
+        'Esta empresa já possui essa solução vinculada',
+      );
+    }
+
+    const entity = this.repo.create(data);
+    return this.repo.save(entity);
   }
 
   // READ ALL
   async findAll() {
-    return this.companySolutionRepository.find();
+    return this.repo.find();
   }
 
   // READ ONE
   async findOne(id: number) {
-    const entity = await this.companySolutionRepository.findOne({
-      where: { id },
-    });
+    const entity = await this.repo.findOne({ where: { id } });
 
     if (!entity) {
       throw new NotFoundException(`CompanySolution ${id} not found`);
@@ -43,14 +54,14 @@ export class CompanySolutionsService {
 
     Object.assign(entity, data);
 
-    return this.companySolutionRepository.save(entity);
+    return this.repo.save(entity);
   }
 
   // DELETE
   async remove(id: number) {
     await this.findOne(id);
 
-    await this.companySolutionRepository.delete(id);
+    await this.repo.delete(id);
 
     return { message: 'CompanySolution deleted successfully' };
   }

@@ -1,46 +1,88 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Param,
-  Patch,
+  Controller,
   Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Patch,
+  Post,
 } from '@nestjs/common';
 
+import {
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
+
 import { TasksService } from './tasks.service';
+
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 
+@ApiTags('Tasks')
 @Controller('tasks')
 export class TasksController {
-  constructor(private readonly tasksService: TasksService) {}
+  constructor(
+    private readonly tasksService: TasksService,
+  ) {}
 
   @Get()
+  @ApiOperation({
+    summary: 'Listar todas as tarefas',
+  })
   findAll() {
     return this.tasksService.findAll();
   }
 
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Buscar tarefa por ID',
+  })
+  @ApiParam({
+    name: 'id',
+    example: 1,
+  })
+  findOne(
+    @Param('id', ParseIntPipe)
+    id: number,
+  ) {
+    return this.tasksService.findOne(id);
+  }
+
   @Post()
-  create(@Body() body: CreateTaskDto) {
+  @ApiOperation({
+    summary: 'Criar tarefa',
+  })
+  create(
+    @Body()
+    body: CreateTaskDto,
+  ) {
     return this.tasksService.create(body);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.tasksService.findOne(Number(id));
-  }
-
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Atualizar tarefa',
+  })
   update(
-    @Param('id') id: string,
-    @Body() body: UpdateTaskDto,
+    @Param('id', ParseIntPipe)
+    id: number,
+
+    @Body()
+    body: UpdateTaskDto,
   ) {
-    return this.tasksService.update(Number(id), body);
+    return this.tasksService.update(id, body);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tasksService.remove(Number(id));
+  @ApiOperation({
+    summary: 'Excluir tarefa',
+  })
+  remove(
+    @Param('id', ParseIntPipe)
+    id: number,
+  ) {
+    return this.tasksService.remove(id);
   }
 }

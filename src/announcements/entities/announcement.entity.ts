@@ -3,6 +3,8 @@ import {
   PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
+  UpdateDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('announcements')
@@ -10,6 +12,7 @@ export class Announcement {
   @PrimaryGeneratedColumn()
   id!: number;
 
+  @Index()
   @Column({ length: 150 })
   title!: string;
 
@@ -21,4 +24,7 @@ export class Announcement {
 
   @CreateDateColumn()
   createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

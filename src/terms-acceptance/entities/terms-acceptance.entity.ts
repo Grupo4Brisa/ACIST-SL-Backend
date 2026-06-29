@@ -1,6 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  Unique,
+} from 'typeorm';
 
 @Entity('terms_acceptance')
+@Unique(['companyId', 'termVersion'])
 export class TermsAcceptance {
   @PrimaryGeneratedColumn()
   id!: number;
@@ -21,6 +27,30 @@ export class TermsAcceptance {
 
   @Column()
   termVersion!: string;
+
+  // =========================
+  // ASSINATURA DIGITAL
+  // =========================
+
+  @Column({
+    nullable: true,
+  })
+  documentUrl?: string;
+
+  @Column({
+    nullable: true,
+  })
+  signatureProvider?: string;
+
+  @Column({
+    nullable: true,
+  })
+  signatureId?: string;
+
+  @Column({
+    nullable: true,
+  })
+  signedDocumentHash?: string;
 
   @Column({
     type: 'timestamp',

@@ -1,4 +1,5 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { CompanyStatus } from '../company-status.enum';
 
 @Entity('companies')
 export class Company {
@@ -12,7 +13,7 @@ export class Company {
   corporateName!: string;
 
   @Column({ unique: true })
-  cnpj!: string;
+  cnpjcpf!: string;
 
   @Column({ nullable: true })
   stateRegistration?: string;
@@ -53,38 +54,29 @@ export class Company {
   @Column({ nullable: true })
   employeesCount?: number;
 
-  @Column({
-    type: 'date',
-    nullable: true,
-  })
+  @Column({ type: 'date', nullable: true })
   foundationDate?: Date;
 
-  @Column({
-    type: 'text',
-    nullable: true,
-  })
+  @Column({ type: 'text', nullable: true })
   eventPresentation?: string;
 
-  @Column({
-    default: 'INCOMPLETE',
-  })
-  status!: string;
-
-  @Column({
-    type: 'date',
-    nullable: true,
-  })
+  @Column({ type: 'date', nullable: true })
   associationDate?: Date;
 
   @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
+    type: 'enum',
+    enum: CompanyStatus,
+    default: CompanyStatus.INCOMPLETE,
   })
+  status!: CompanyStatus;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;
 
   @Column({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
   })
   updatedAt!: Date;
 }

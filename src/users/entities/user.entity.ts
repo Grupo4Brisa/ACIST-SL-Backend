@@ -1,4 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+} from 'typeorm';
+
+import { UserRole } from '../dto/create-user.dto';
 
 @Entity('users')
 export class User {
@@ -8,31 +17,25 @@ export class User {
   @Column()
   name!: string;
 
-  @Column({
-    unique: true,
-  })
+  @Index({ unique: true })
+  @Column()
   email!: string;
 
   @Column()
   password!: string;
 
-  @Column()
-  role!: string;
-
   @Column({
-    default: true,
+    type: 'enum',
+    enum: UserRole,
   })
+  role!: UserRole;
+
+  @Column({ default: true })
   active!: boolean;
 
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
+  @CreateDateColumn()
   createdAt!: Date;
 
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-  })
+  @UpdateDateColumn()
   updatedAt!: Date;
 }

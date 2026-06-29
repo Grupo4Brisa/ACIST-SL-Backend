@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -14,35 +14,41 @@ export class AnnouncementsService {
   ) {}
 
   create(createAnnouncementDto: CreateAnnouncementDto) {
-    const announcement = this.announcementsRepository.create(createAnnouncementDto);
-
-    return this.announcementsRepository.save(announcement);
+    return this.announcementsRepository.save(
+      this.announcementsRepository.create(createAnnouncementDto),
+    );
   }
 
   findAll() {
     return this.announcementsRepository.find({
-      where: {
-        active: true,
-      },
-      order: {
-        createdAt: 'DESC',
-      },
+      where: { active: true },
+      order: { createdAt: 'DESC' },
     });
   }
 
-  findOne(id: number) {
-    return this.announcementsRepository.findOne({
+  async findOne(id: number) {
+    const announcement = await this.announcementsRepository.findOne({
       where: { id },
     });
+
+    if (!announcement) {
+      throw new NotFoundException('Announcement não encontrado');
+    }
+
+    return announcement;
   }
 
-  async update(id: number,updateAnnouncementDto: UpdateAnnouncementDto) {
-    await this.announcementsRepository.update(id,updateAnnouncementDto);
+  async update(id: number, dto: UpdateAnnouncementDto) {
+    const announcement = await this.findOne(id);
 
-    return this.findOne(id);
+    Object.assign(announcement, dto);
+
+    return this.announcementsRepository.save(announcement);
   }
 
   async remove(id: number) {
+    await this.findOne(id);
+
     await this.announcementsRepository.update(id, {
       active: false,
     });
