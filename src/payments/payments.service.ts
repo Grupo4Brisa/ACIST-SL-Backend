@@ -12,11 +12,16 @@ import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
 import { PaymentStatus } from './payment-status.enum';
 
+import { CompaniesService } from '../companies/companies.service';
+import { CompanyStatus } from '../companies/company-status.enum';
+
 @Injectable()
 export class PaymentsService {
   constructor(
     @InjectRepository(Payment)
     private readonly paymentRepository: Repository<Payment>,
+
+    private readonly companiesService: CompaniesService,
   ) {}
 
   // =========================
@@ -44,18 +49,31 @@ export class PaymentsService {
   // =========================
   // CREATE
   // =========================
-  async create(data: CreatePaymentDto) {
-    if (data.amount <= 0) {
-      throw new BadRequestException('O valor deve ser maior que zero');
-    }
+  // =========================
+async create(data: CreatePaymentDto) {
+  const company = await this.companiesService.findOne(
+    data.companyId,
+  );
 
-    const payment = this.paymentRepository.create({
-      ...data,
-      status: PaymentStatus.PENDING,
-    });
-
-    return this.paymentRepository.save(payment);
+  if (company.status !== CompanyStatus.ACTIVE) {
+    throw new BadRequestException(
+      'Somente empresas ativas podem receber pagamentos.',
+    );
   }
+
+  if (data.amount <= 0) {
+    throw new BadRequestException(
+      'O valor deve ser maior que zero',
+    );
+  }
+
+  const payment = this.paymentRepository.create({
+    ...data,
+    status: PaymentStatus.PENDING,
+  });
+
+  return this.paymentRepository.save(payment);
+}
 
   // =========================
   // UPDATE (limitado)
@@ -69,11 +87,19 @@ export class PaymentsService {
       );
     }
 
-    if (data.amount !== undefined && data.amount <= 0) {
-      throw new BadRequestException('O valor deve ser maior que zero');
+    if (
+      data.amount !== undefined &&
+      data.amount <= 0
+    ) {
+      throw new BadRequestException(
+        'O valor deve ser maior que zero',
+      );
     }
 
-    const updated = this.paymentRepository.merge(payment, data);
+    const updated = this.paymentRepository.merge(
+      payment,
+      data,
+    );
 
     return this.paymentRepository.save(updated);
   }

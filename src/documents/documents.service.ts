@@ -1,6 +1,7 @@
 import {
   Injectable,
   NotFoundException,
+  BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -11,11 +12,16 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 import { DocumentStatus } from './document-status.enum';
 
+import { CompaniesService } from '../companies/companies.service';
+import { CompanyStatus } from '../companies/company-status.enum';
+
 @Injectable()
 export class DocumentsService {
   constructor(
     @InjectRepository(Document)
     private readonly repo: Repository<Document>,
+
+    private readonly companiesService: CompaniesService,
   ) {}
 
   // =========================
@@ -43,12 +49,22 @@ export class DocumentsService {
   // =========================
   // CREATE
   // =========================
-  create(
+  async create(
     data: CreateDocumentDto & {
       fileName: string;
       filePath: string;
     },
   ) {
+    const company = await this.companiesService.findOne(
+      data.companyId,
+    );
+
+    if (company.status !== CompanyStatus.ACTIVE) {
+      throw new BadRequestException(
+        'Somente empresas ativas podem enviar documentos.',
+      );
+    }
+
     const document = this.repo.create({
       ...data,
       status: DocumentStatus.PENDING,
@@ -70,9 +86,7 @@ export class DocumentsService {
     let fileName = doc.fileName;
     let filePath = doc.filePath;
 
-    // Se veio novo arquivo
     if (file) {
-      // Remove o arquivo antigo
       if (doc.filePath && fs.existsSync(doc.filePath)) {
         fs.unlinkSync(doc.filePath);
       }
@@ -96,7 +110,6 @@ export class DocumentsService {
   async remove(id: number) {
     const doc = await this.findOne(id);
 
-    // Remove o arquivo físico
     if (doc.filePath && fs.existsSync(doc.filePath)) {
       fs.unlinkSync(doc.filePath);
     }

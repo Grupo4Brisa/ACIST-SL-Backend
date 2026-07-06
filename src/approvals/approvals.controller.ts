@@ -3,6 +3,8 @@ import {
   Get,
   Param,
   ParseIntPipe,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 
 import {
@@ -10,11 +12,19 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { ApprovalsService } from './approvals.service';
 
+import { JwtAuthGuard } from '../auth/jwt.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/user-role.enum';
+
 @ApiTags('Approvals')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('approvals')
 export class ApprovalsController {
   constructor(
@@ -30,6 +40,10 @@ export class ApprovalsController {
     status: 200,
     description: 'Lista de aprovações retornada com sucesso',
   })
+  @Roles(
+    UserRole.COLABORADOR_ADMIN,
+    UserRole.COLABORADOR_APROVADOR,
+  )
   findAll() {
     return this.approvalsService.findAll();
   }
@@ -48,6 +62,10 @@ export class ApprovalsController {
     status: 404,
     description: 'Aprovação não encontrada',
   })
+  @Roles(
+    UserRole.COLABORADOR_ADMIN,
+    UserRole.COLABORADOR_APROVADOR,
+  )
   findOne(
     @Param('id', ParseIntPipe)
     id: number,
@@ -65,6 +83,10 @@ export class ApprovalsController {
     status: 200,
     description: 'Histórico da empresa retornado com sucesso',
   })
+  @Roles(
+    UserRole.COLABORADOR_ADMIN,
+    UserRole.COLABORADOR_APROVADOR,
+  )
   findByCompany(
     @Param('companyId', ParseIntPipe)
     companyId: number,

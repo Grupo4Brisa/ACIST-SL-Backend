@@ -5,9 +5,13 @@ import { DocumentsController } from './documents.controller';
 import { DocumentsService } from './documents.service';
 
 import { Document } from './entities/document.entity';
+import { CompaniesModule } from '../companies/companies.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Document])],
+  imports: [
+    TypeOrmModule.forFeature([Document]),
+    CompaniesModule,
+  ],
   controllers: [DocumentsController],
   providers: [DocumentsService],
   exports: [DocumentsService],

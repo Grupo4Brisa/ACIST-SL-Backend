@@ -12,14 +12,6 @@ export class CreateApprovalDto {
   companyId!: number;
 
   @ApiProperty({
-    example: 10,
-    description: 'ID do usuário que executou a ação',
-  })
-  @IsInt()
-  @IsNotEmpty()
-  userId!: number;
-
-  @ApiProperty({
     example: 'APPROVED',
     enum: ApprovalAction,
   })
