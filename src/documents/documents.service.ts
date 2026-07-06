@@ -9,6 +9,7 @@ import * as fs from 'fs';
 import { Document } from './entities/document.entity';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
+import { DocumentStatus } from './document-status.enum';
 
 @Injectable()
 export class DocumentsService {
@@ -28,7 +29,9 @@ export class DocumentsService {
   // FIND ONE
   // =========================
   async findOne(id: number) {
-    const doc = await this.repo.findOne({ where: { id } });
+    const doc = await this.repo.findOne({
+      where: { id },
+    });
 
     if (!doc) {
       throw new NotFoundException('Documento não encontrado');
@@ -48,7 +51,7 @@ export class DocumentsService {
   ) {
     const document = this.repo.create({
       ...data,
-      status: 'PENDING',
+      status: DocumentStatus.PENDING,
     });
 
     return this.repo.save(document);
@@ -67,9 +70,9 @@ export class DocumentsService {
     let fileName = doc.fileName;
     let filePath = doc.filePath;
 
-    // 🔥 se veio novo arquivo
+    // Se veio novo arquivo
     if (file) {
-      // apaga arquivo antigo
+      // Remove o arquivo antigo
       if (doc.filePath && fs.existsSync(doc.filePath)) {
         fs.unlinkSync(doc.filePath);
       }
@@ -93,6 +96,7 @@ export class DocumentsService {
   async remove(id: number) {
     const doc = await this.findOne(id);
 
+    // Remove o arquivo físico
     if (doc.filePath && fs.existsSync(doc.filePath)) {
       fs.unlinkSync(doc.filePath);
     }

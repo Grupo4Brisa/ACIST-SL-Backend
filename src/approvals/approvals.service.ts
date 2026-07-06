@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Approval } from './entities/approval.entity';
-import { CreateApprovalDto } from './dto/create-approval.dto';
-import { UpdateApprovalDto } from './dto/update-approval.dto';
+import { ApprovalAction } from './approval-action.enum';
 
 @Injectable()
 export class ApprovalsService {
@@ -13,29 +15,58 @@ export class ApprovalsService {
     private readonly approvalRepository: Repository<Approval>,
   ) {}
 
+  // =========================
+  // LISTAR HISTÓRICO COMPLETO
+  // =========================
   findAll() {
-    return this.approvalRepository.find();
-  }
-
-  findOne(id: number) {
-    return this.approvalRepository.findOne({
-      where: { id },
+    return this.approvalRepository.find({
+      order: {
+        createdAt: 'DESC',
+      },
     });
   }
 
-  create(approvalData: CreateApprovalDto) {
-    const approval = this.approvalRepository.create(approvalData);
+  // =========================
+  // BUSCAR POR ID (AUDITORIA)
+  // =========================
+  async findOne(id: number) {
+    const approval = await this.approvalRepository.findOne({
+      where: { id },
+    });
+
+    if (!approval) {
+      throw new NotFoundException('Aprovação não encontrada');
+    }
+
+    return approval;
+  }
+
+  // =========================
+  // BUSCAR POR EMPRESA
+  // =========================
+  findByCompany(companyId: number) {
+    return this.approvalRepository.find({
+      where: { companyId },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+
+  // =========================
+  // CRIAR LOG DE APROVAÇÃO (USO INTERNO)
+  // =========================
+  createLog(data: {
+    companyId: number;
+    userId: number;
+    action: ApprovalAction;
+    observation?: string;
+  }) {
+    const approval = this.approvalRepository.create({
+      ...data,
+      createdAt: new Date(),
+    });
+
     return this.approvalRepository.save(approval);
-  }
-
-  async update(id: number, updateApprovalDto: UpdateApprovalDto) {
-    await this.approvalRepository.update(id, updateApprovalDto);
-    return this.findOne(id);
-  }
-
-  async remove(id: number) {
-    await this.approvalRepository.delete(id);
-
-    return { message: 'Aprovação removida com sucesso' };
   }
 }

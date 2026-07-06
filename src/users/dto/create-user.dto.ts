@@ -13,11 +13,7 @@ import {
   IsBoolean,
 } from 'class-validator';
 
-export enum UserRole {
-  ADMIN = 'ADMIN',
-  COMPANY = 'COMPANY',
-  USER = 'USER',
-}
+import { UserRole } from '../user-role.enum';
 
 export class CreateUserDto {
   @ApiProperty({ example: 'Gabriela Lima' })

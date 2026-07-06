@@ -31,15 +31,8 @@ export class PaymentsController {
   // =========================
   // LISTAR TODOS
   // =========================
-
   @Get()
-  @ApiOperation({
-    summary: 'Listar todos os pagamentos',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de pagamentos retornada com sucesso.',
-  })
+  @ApiOperation({ summary: 'Listar todos os pagamentos' })
   findAll() {
     return this.paymentsService.findAll();
   }
@@ -47,109 +40,69 @@ export class PaymentsController {
   // =========================
   // BUSCAR POR ID
   // =========================
-
   @Get(':id')
-  @ApiOperation({
-    summary: 'Buscar pagamento por ID',
-  })
-  @ApiParam({
-    name: 'id',
-    example: 1,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Pagamento encontrado.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Pagamento não encontrado.',
-  })
-  findOne(
-    @Param('id', ParseIntPipe)
-    id: number,
-  ) {
+  @ApiOperation({ summary: 'Buscar pagamento por ID' })
+  @ApiParam({ name: 'id', example: 1 })
+  findOne(@Param('id', ParseIntPipe) id: number) {
     return this.paymentsService.findOne(id);
   }
 
   // =========================
-  // CRIAR
+  // CRIAR PAGAMENTO
   // =========================
-
   @Post()
-  @ApiOperation({
-    summary: 'Cadastrar pagamento',
-  })
-  @ApiBody({
-    type: CreatePaymentDto,
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Pagamento cadastrado com sucesso.',
-  })
-  create(
-    @Body()
-    body: CreatePaymentDto,
-  ) {
+  @ApiOperation({ summary: 'Criar pagamento (status PENDING)' })
+  @ApiBody({ type: CreatePaymentDto })
+  create(@Body() body: CreatePaymentDto) {
     return this.paymentsService.create(body);
   }
 
   // =========================
-  // ATUALIZAR
+  // ATUALIZAÇÃO GERAL (limitada)
   // =========================
-
   @Patch(':id')
-  @ApiOperation({
-    summary: 'Atualizar pagamento',
-  })
-  @ApiParam({
-    name: 'id',
-    example: 1,
-  })
-  @ApiBody({
-    type: UpdatePaymentDto,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Pagamento atualizado com sucesso.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Pagamento não encontrado.',
-  })
+  @ApiOperation({ summary: 'Atualizar dados do pagamento (limitado)' })
+  @ApiBody({ type: UpdatePaymentDto })
   update(
-    @Param('id', ParseIntPipe)
-    id: number,
-
-    @Body()
-    body: UpdatePaymentDto,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: UpdatePaymentDto,
   ) {
     return this.paymentsService.update(id, body);
   }
 
   // =========================
+  // APROVAR PAGAMENTO
+  // =========================
+  @Patch(':id/approve')
+  @ApiOperation({ summary: 'Aprovar pagamento' })
+  approve(@Param('id', ParseIntPipe) id: number) {
+    return this.paymentsService.approve(id);
+  }
+
+  // =========================
+  // MARCAR COMO PAGO
+  // =========================
+  @Patch(':id/pay')
+  @ApiOperation({ summary: 'Marcar pagamento como pago' })
+  pay(@Param('id', ParseIntPipe) id: number) {
+    return this.paymentsService.pay(id);
+  }
+
+  // =========================
+  // CANCELAR PAGAMENTO
+  // =========================
+  @Patch(':id/cancel')
+  @ApiOperation({ summary: 'Cancelar pagamento' })
+  cancel(@Param('id', ParseIntPipe) id: number) {
+    return this.paymentsService.cancel(id);
+  }
+
+  // =========================
   // REMOVER
   // =========================
-
   @Delete(':id')
-  @ApiOperation({
-    summary: 'Remover pagamento',
-  })
-  @ApiParam({
-    name: 'id',
-    example: 1,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Pagamento removido com sucesso.',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Pagamento não encontrado.',
-  })
-  remove(
-    @Param('id', ParseIntPipe)
-    id: number,
-  ) {
+  @ApiOperation({ summary: 'Remover pagamento' })
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.paymentsService.remove(id);
   }
 }

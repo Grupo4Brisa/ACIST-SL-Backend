@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -6,33 +11,86 @@ import { Company } from './entities/company.entity';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { CompleteCompanyDto } from './dto/complete-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
+import { FilterCompanyDto } from './dto/filter-company.dto';
+
 import { CompanyStatus } from './company-status.enum';
+
+import { ApprovalsService } from '../approvals/approvals.service';
+import { ApprovalAction } from '../approvals/approval-action.enum';
 
 @Injectable()
 export class CompaniesService {
   constructor(
     @InjectRepository(Company)
     private readonly companyRepository: Repository<Company>,
+
+    private readonly approvalsService: ApprovalsService,
   ) {}
 
   // =========================
-  // LISTAR TODAS
+  // LISTAR COM FILTROS
   // =========================
-  findAll() {
-    return this.companyRepository.find();
+  async findAll(filters: FilterCompanyDto) {
+    const query = this.companyRepository.createQueryBuilder('company');
+
+    if (filters.companyName) {
+      query.andWhere(
+        '(company.companyName ILIKE :companyName OR company.corporateName ILIKE :companyName)',
+        {
+          companyName: `%${filters.companyName}%`,
+        },
+      );
+    }
+
+    if (filters.city) {
+      query.andWhere('company.city ILIKE :city', {
+        city: `%${filters.city}%`,
+      });
+    }
+
+    if (filters.companySize) {
+      query.andWhere('company.companySize = :companySize', {
+        companySize: filters.companySize,
+      });
+    }
+
+    if (filters.establishmentType) {
+      query.andWhere(
+        'company.establishmentType ILIKE :establishmentType',
+        {
+          establishmentType: `%${filters.establishmentType}%`,
+        },
+      );
+    }
+
+    if (filters.status) {
+      query.andWhere('company.status = :status', {
+        status: filters.status,
+      });
+    }
+
+    return query.getMany();
   }
 
   // =========================
   // BUSCAR POR ID
   // =========================
-  findOne(id: number) {
-    return this.companyRepository.findOne({ where: { id } });
+  async findOne(id: number) {
+    const company = await this.companyRepository.findOne({
+      where: { id },
+    });
+
+    if (!company) {
+      throw new NotFoundException('Empresa não encontrada.');
+    }
+
+    return company;
   }
 
   // =========================
-  // ETAPA 1 - CRIAÇÃO INICIAL
+  // CRIAÇÃO INICIAL
   // =========================
-  createLanding(companyData: CreateCompanyDto) {
+  async createLanding(companyData: CreateCompanyDto) {
     const company = this.companyRepository.create({
       ...companyData,
       status: CompanyStatus.INCOMPLETE,
@@ -42,18 +100,21 @@ export class CompaniesService {
   }
 
   // =========================
-  // ETAPA 2 - COMPLETAR CADASTRO
+  // COMPLETAR CADASTRO
   // =========================
   async complete(id: number, data: CompleteCompanyDto) {
-    const company = await this.companyRepository.findOne({ where: { id } });
+    const company = await this.findOne(id);
 
-    if (!company) return null;
+    if (company.status !== CompanyStatus.INCOMPLETE) {
+      throw new BadRequestException(
+        'O cadastro desta empresa já foi concluído.',
+      );
+    }
 
     const updated = this.companyRepository.merge(company, {
       ...data,
-      status: CompanyStatus.ACTIVE,
+      status: CompanyStatus.PENDING_APPROVAL,
 
-      // 🔥 CORREÇÃO AQUI (NÃO USAR null)
       foundationDate: data.foundationDate
         ? new Date(data.foundationDate)
         : undefined,
@@ -62,7 +123,6 @@ export class CompaniesService {
         ? new Date(data.associationDate)
         : undefined,
 
-      // 🔥 garante número correto se vier string
       employeesCount: data.employeesCount
         ? Number(data.employeesCount)
         : undefined,
@@ -72,12 +132,62 @@ export class CompaniesService {
   }
 
   // =========================
-  // UPDATE GERAL (ADMIN)
+  // APROVAR EMPRESA
+  // =========================
+  async approve(companyId: number, userId: number) {
+    const company = await this.findOne(companyId);
+
+    if (company.status !== CompanyStatus.PENDING_APPROVAL) {
+      throw new BadRequestException(
+        'A empresa não está aguardando aprovação.',
+      );
+    }
+
+    company.status = CompanyStatus.ACTIVE;
+
+    await this.companyRepository.save(company);
+
+    await this.approvalsService.createLog({
+      companyId,
+      userId,
+      action: ApprovalAction.APPROVED,
+      observation: 'Empresa aprovada pelo aprovador',
+    });
+
+    return company;
+  }
+
+  // =========================
+  // REPROVAR EMPRESA
+  // =========================
+  async reject(companyId: number, userId: number) {
+    const company = await this.findOne(companyId);
+
+    if (company.status !== CompanyStatus.PENDING_APPROVAL) {
+      throw new BadRequestException(
+        'A empresa não está aguardando aprovação.',
+      );
+    }
+
+    company.status = CompanyStatus.INACTIVE;
+
+    await this.companyRepository.save(company);
+
+    await this.approvalsService.createLog({
+      companyId,
+      userId,
+      action: ApprovalAction.REJECTED,
+      observation: 'Empresa rejeitada pelo aprovador',
+    });
+
+    return company;
+  }
+
+  // =========================
+  // UPDATE GERAL
   // =========================
   async update(id: number, data: UpdateCompanyDto) {
-    const company = await this.companyRepository.findOne({ where: { id } });
-
-    if (!company) return null;
+    const company = await this.findOne(id);
 
     const updated = this.companyRepository.merge(company, data);
 
@@ -88,6 +198,8 @@ export class CompaniesService {
   // DELETE
   // =========================
   async remove(id: number) {
+    await this.findOne(id);
+
     await this.companyRepository.delete(id);
 
     return {

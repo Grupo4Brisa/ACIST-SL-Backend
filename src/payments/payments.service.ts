@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 import { Payment } from './entities/payment.entity';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { UpdatePaymentDto } from './dto/update-payment.dto';
+import { PaymentStatus } from './payment-status.enum';
 
 @Injectable()
 export class PaymentsService {
@@ -21,7 +22,6 @@ export class PaymentsService {
   // =========================
   // LISTAR
   // =========================
-
   findAll() {
     return this.paymentRepository.find();
   }
@@ -29,16 +29,13 @@ export class PaymentsService {
   // =========================
   // BUSCAR
   // =========================
-
   async findOne(id: number) {
     const payment = await this.paymentRepository.findOne({
       where: { id },
     });
 
     if (!payment) {
-      throw new NotFoundException(
-        'Pagamento não encontrado',
-      );
+      throw new NotFoundException('Pagamento não encontrado');
     }
 
     return payment;
@@ -47,69 +44,103 @@ export class PaymentsService {
   // =========================
   // CREATE
   // =========================
-
   async create(data: CreatePaymentDto) {
     if (data.amount <= 0) {
-      throw new BadRequestException(
-        'O valor deve ser maior que zero',
-      );
+      throw new BadRequestException('O valor deve ser maior que zero');
     }
 
     const payment = this.paymentRepository.create({
       ...data,
-      status: 'PENDING',
+      status: PaymentStatus.PENDING,
     });
 
     return this.paymentRepository.save(payment);
   }
 
   // =========================
-  // UPDATE
+  // UPDATE (limitado)
   // =========================
-
-  async update(
-    id: number,
-    data: UpdatePaymentDto,
-  ) {
+  async update(id: number, data: UpdatePaymentDto) {
     const payment = await this.findOne(id);
 
+    if (payment.status === PaymentStatus.PAID) {
+      throw new BadRequestException(
+        'Pagamento já foi pago e não pode ser alterado',
+      );
+    }
+
     if (data.amount !== undefined && data.amount <= 0) {
-      throw new BadRequestException(
-        'O valor deve ser maior que zero',
-      );
+      throw new BadRequestException('O valor deve ser maior que zero');
     }
 
-    if (
-      data.status &&
-      data.status.toUpperCase() === 'PAID'
-    ) {
-      data.paidAt ??= new Date();
-    }
-
-    if (
-      data.paidAt &&
-      data.status &&
-      data.status.toUpperCase() !== 'PAID'
-    ) {
-      throw new BadRequestException(
-        'paidAt só pode ser informado quando o status for PAID',
-      );
-    }
-
-    const updated = this.paymentRepository.merge(
-      payment,
-      data,
-    );
+    const updated = this.paymentRepository.merge(payment, data);
 
     return this.paymentRepository.save(updated);
   }
 
   // =========================
+  // APPROVE
+  // =========================
+  async approve(id: number) {
+    const payment = await this.findOne(id);
+
+    if (payment.status !== PaymentStatus.PENDING) {
+      throw new BadRequestException(
+        'Somente pagamentos PENDING podem ser aprovados',
+      );
+    }
+
+    payment.status = PaymentStatus.APPROVED;
+
+    return this.paymentRepository.save(payment);
+  }
+
+  // =========================
+  // PAY
+  // =========================
+  async pay(id: number) {
+    const payment = await this.findOne(id);
+
+    if (payment.status !== PaymentStatus.APPROVED) {
+      throw new BadRequestException(
+        'Somente pagamentos APPROVED podem ser pagos',
+      );
+    }
+
+    payment.status = PaymentStatus.PAID;
+    payment.paidAt = new Date();
+
+    return this.paymentRepository.save(payment);
+  }
+
+  // =========================
+  // CANCEL
+  // =========================
+  async cancel(id: number) {
+    const payment = await this.findOne(id);
+
+    if (payment.status === PaymentStatus.PAID) {
+      throw new BadRequestException(
+        'Pagamento já pago não pode ser cancelado',
+      );
+    }
+
+    payment.status = PaymentStatus.CANCELLED;
+
+    return this.paymentRepository.save(payment);
+  }
+
+  // =========================
   // DELETE
   // =========================
-
   async remove(id: number) {
-    await this.findOne(id);
+    const payment = await this.findOne(id);
+
+    if (payment.status === PaymentStatus.PAID) {
+      throw new BadRequestException(
+        'Pagamento pago não pode ser removido',
+      );
+    }
 
     await this.paymentRepository.delete(id);
 

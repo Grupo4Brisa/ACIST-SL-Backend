@@ -7,6 +7,9 @@ import {
   ParseIntPipe,
   Patch,
   Post,
+  Query,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 
 import {
@@ -15,6 +18,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { CompaniesService } from './companies.service';
@@ -22,59 +26,68 @@ import { CompaniesService } from './companies.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { CompleteCompanyDto } from './dto/complete-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
+import { FilterCompanyDto } from './dto/filter-company.dto';
+
+import { JwtAuthGuard } from '../auth/jwt.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/user-role.enum';
 
 @ApiTags('Companies')
+@ApiBearerAuth('access-token')
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('companies')
 export class CompaniesController {
   constructor(private readonly companiesService: CompaniesService) {}
 
   // =========================
   // LISTAR TODAS
+  // ADMIN + APROVADOR
   // =========================
   @Get()
-  @ApiOperation({ summary: 'Listar todas as empresas' })
-  @ApiResponse({ status: 200, description: 'Lista de empresas retornada com sucesso' })
-  findAll() {
-    return this.companiesService.findAll();
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
+  @ApiOperation({ summary: 'Listar empresas com filtros opcionais' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de empresas retornada com sucesso',
+  })
+  findAll(@Query() filters: FilterCompanyDto) {
+    return this.companiesService.findAll(filters);
   }
 
   // =========================
   // BUSCAR POR ID
+  // ADMIN + APROVADOR
   // =========================
   @Get(':id')
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Buscar empresa por ID' })
   @ApiParam({ name: 'id', example: 1 })
-  @ApiResponse({ status: 200, description: 'Empresa encontrada' })
-  @ApiResponse({ status: 404, description: 'Empresa não encontrada' })
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.companiesService.findOne(id);
   }
 
   // =========================
-  // ETAPA 1 - LANDING (CREATE)
+  // CRIAÇÃO (LANDING)
+  // TODOS LOGADOS
   // =========================
   @Post('landing')
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Criar empresa (cadastro inicial)' })
-  @ApiBody({
-    type: CreateCompanyDto,
-    description: 'Dados mínimos para criar uma empresa',
-  })
-  @ApiResponse({ status: 201, description: 'Empresa criada com sucesso (INCOMPLETE)' })
-  createLanding(@Body() body: CreateCompanyDto) {
+  @ApiBody({ type: CreateCompanyDto })
+  createLanding(@Body() body: CreateCompanyDto, @Req() req) {
     return this.companiesService.createLanding(body);
   }
 
   // =========================
-  // ETAPA 2 - COMPLETAR CADASTRO
+  // COMPLETAR CADASTRO
+  // TODOS LOGADOS
   // =========================
   @Patch(':id/complete')
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Completar cadastro da empresa' })
   @ApiParam({ name: 'id', example: 1 })
-  @ApiBody({
-    type: CompleteCompanyDto,
-    description: 'Dados adicionais para completar o cadastro da empresa',
-  })
-  @ApiResponse({ status: 200, description: 'Cadastro completado com sucesso' })
+  @ApiBody({ type: CompleteCompanyDto })
   complete(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: CompleteCompanyDto,
@@ -83,16 +96,44 @@ export class CompaniesController {
   }
 
   // =========================
-  // UPDATE GERAL (ADMIN)
+  // APROVAR EMPRESA
+  // SÓ APROVADOR
+  // =========================
+  @Patch(':id/approve')
+  @Roles(UserRole.COLABORADOR_APROVADOR)
+  @ApiOperation({ summary: 'Aprovar empresa' })
+  @ApiParam({ name: 'id', example: 1 })
+  approve(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req,
+  ) {
+    return this.companiesService.approve(id, req.user.id);
+  }
+
+  // =========================
+  // REPROVAR EMPRESA
+  // SÓ APROVADOR
+  // =========================
+  @Patch(':id/reject')
+  @Roles(UserRole.COLABORADOR_APROVADOR)
+  @ApiOperation({ summary: 'Reprovar empresa' })
+  @ApiParam({ name: 'id', example: 1 })
+  reject(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req,
+  ) {
+    return this.companiesService.reject(id, req.user.id);
+  }
+
+  // =========================
+  // UPDATE GERAL
+  // ADMIN + APROVADOR
   // =========================
   @Patch(':id')
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Atualizar empresa (geral)' })
   @ApiParam({ name: 'id', example: 1 })
-  @ApiBody({
-    type: UpdateCompanyDto,
-    description: 'Atualização geral da empresa',
-  })
-  @ApiResponse({ status: 200, description: 'Empresa atualizada com sucesso' })
+  @ApiBody({ type: UpdateCompanyDto })
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdateCompanyDto,
@@ -102,11 +143,12 @@ export class CompaniesController {
 
   // =========================
   // DELETE
+  // ADMIN + APROVADOR
   // =========================
   @Delete(':id')
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Remover empresa' })
   @ApiParam({ name: 'id', example: 1 })
-  @ApiResponse({ status: 200, description: 'Empresa removida com sucesso' })
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.companiesService.remove(id);
   }

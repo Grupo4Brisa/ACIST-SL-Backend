@@ -1,6 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsInt, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import {
+  IsEnum,
+  IsInt,
+  IsOptional,
+} from 'class-validator';
+
+import { DocumentType } from '../document-type.enum';
+import { DocumentStatus } from '../document-status.enum';
 
 export class UpdateDocumentDto {
   @ApiPropertyOptional()
@@ -9,13 +16,17 @@ export class UpdateDocumentDto {
   @IsInt()
   companyId?: number;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    enum: DocumentType,
+  })
   @IsOptional()
-  @IsString()
-  documentType?: string;
+  @IsEnum(DocumentType)
+  documentType?: DocumentType;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    enum: DocumentStatus,
+  })
   @IsOptional()
-  @IsString()
-  status?: string;
+  @IsEnum(DocumentStatus)
+  status?: DocumentStatus;
 }

@@ -45,6 +45,33 @@ export class UsersService {
   }
 
   // =========================
+  // 🔐 BUSCAR POR EMAIL (LOGIN)
+  // =========================
+  findByEmail(email: string) {
+    return this.userRepository.findOne({
+      where: { email },
+    });
+  }
+
+  // =========================
+  // 🔐 BUSCAR USUÁRIO PARA AUTENTICAÇÃO (COM SENHA)
+  // =========================
+  findAuthUserByEmail(email: string) {
+    return this.userRepository.findOne({
+      where: { email },
+      select: [
+        'id',
+        'name',
+        'email',
+        'password',
+        'role',
+        'active',
+        'createdAt',
+      ],
+    });
+  }
+
+  // =========================
   // CRIAR USUÁRIO
   // =========================
   async create(data: CreateUserDto) {
@@ -94,7 +121,8 @@ export class UsersService {
     }
 
     if (data.password) {
-      data.password = await bcrypt.hash(data.password, 10);
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+      data = { ...data, password: hashedPassword };
     }
 
     await this.userRepository.update(id, data);

@@ -1,10 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsInt, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { ApprovalAction } from '../approval-action.enum';
 
 export class CreateApprovalDto {
   @ApiProperty({
     example: 1,
-    description: 'ID da empresa que está sendo aprovada',
+    description: 'ID da empresa',
   })
   @IsInt()
   @IsNotEmpty()
@@ -12,14 +13,22 @@ export class CreateApprovalDto {
 
   @ApiProperty({
     example: 10,
-    description: 'ID do usuário que está aprovando',
+    description: 'ID do usuário que executou a ação',
   })
   @IsInt()
   @IsNotEmpty()
-  approvedBy!: number;
+  userId!: number;
 
   @ApiProperty({
-    example: 'Empresa válida e documentação correta',
+    example: 'APPROVED',
+    enum: ApprovalAction,
+  })
+  @IsEnum(ApprovalAction)
+  @IsNotEmpty()
+  action!: ApprovalAction;
+
+  @ApiProperty({
+    example: 'Empresa validada com sucesso',
     required: false,
   })
   @IsString()

@@ -2,7 +2,6 @@ import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsDate,
-  IsInt,
   IsNumber,
   IsOptional,
   IsPositive,
@@ -10,12 +9,6 @@ import {
 } from 'class-validator';
 
 export class UpdatePaymentDto {
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  companyId?: number;
-
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Number)
@@ -28,22 +21,9 @@ export class UpdatePaymentDto {
   @IsString()
   paymentType?: string;
 
-  @ApiPropertyOptional({
-    example: 'PENDING',
-  })
-  @IsOptional()
-  @IsString()
-  status?: string;
-
   @ApiPropertyOptional()
   @IsOptional()
   @Type(() => Date)
   @IsDate()
   dueDate?: Date;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Type(() => Date)
-  @IsDate()
-  paidAt?: Date;
 }

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-import { ApprovalStatus } from '../approval-status.enum';
+import { ApprovalAction } from '../approval-action.enum';
 
 @Entity('approvals')
 export class Approval {
@@ -14,11 +14,11 @@ export class Approval {
 
   @ApiProperty()
   @Column()
-  approvedBy!: number;
+  userId!: number;
 
-  @ApiProperty({ enum: ApprovalStatus })
-  @Column({ type: 'enum', enum: ApprovalStatus, default: ApprovalStatus.PENDING })
-  status!: ApprovalStatus;
+  @ApiProperty({ enum: ApprovalAction })
+  @Column({ type: 'enum', enum: ApprovalAction })
+  action!: ApprovalAction;
 
   @ApiProperty({ required: false })
   @Column({ nullable: true })
@@ -28,4 +28,3 @@ export class Approval {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;
 }
-

@@ -20,7 +20,7 @@ import { EventsModule } from './events/events.module';
 import { EventRegistrationsModule } from './event-registrations/event-registrations.module';
 import { SocialNetworksModule } from './social-networks/social-networks.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
-
+import { DashboardModule } from './dashboard/dashboard.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -56,6 +56,7 @@ import { AnnouncementsModule } from './announcements/announcements.module';
     EventRegistrationsModule,
     SocialNetworksModule,
     AnnouncementsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],

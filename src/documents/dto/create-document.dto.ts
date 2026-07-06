@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
+import { IsEnum, IsInt, IsNotEmpty } from 'class-validator';
+
+import { DocumentType } from '../document-type.enum';
 
 export class CreateDocumentDto {
   @ApiProperty({ example: 1 })
@@ -9,8 +11,11 @@ export class CreateDocumentDto {
   @IsInt()
   companyId!: number;
 
-  @ApiProperty({ example: 'CONTRATO_SOCIAL' })
+  @ApiProperty({
+    enum: DocumentType,
+    example: DocumentType.SOCIAL_CONTRACT,
+  })
   @IsNotEmpty()
-  @IsString()
-  documentType!: string;
+  @IsEnum(DocumentType)
+  documentType!: DocumentType;
 }

@@ -1,5 +1,8 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
+import { DocumentStatus } from '../document-status.enum';
+import { DocumentType } from '../document-type.enum';
+
 @Entity('documents')
 export class Document {
   @PrimaryGeneratedColumn()
@@ -8,8 +11,11 @@ export class Document {
   @Column()
   companyId!: number;
 
-  @Column()
-  documentType!: string;
+  @Column({
+    type: 'enum',
+    enum: DocumentType,
+  })
+  documentType!: DocumentType;
 
   @Column()
   fileName!: string;
@@ -18,9 +24,11 @@ export class Document {
   filePath!: string;
 
   @Column({
-    default: 'PENDING',
+    type: 'enum',
+    enum: DocumentStatus,
+    default: DocumentStatus.PENDING,
   })
-  status!: string;
+  status!: DocumentStatus;
 
   @Column({
     type: 'timestamp',

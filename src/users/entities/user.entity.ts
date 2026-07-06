@@ -7,7 +7,7 @@ import {
   Index,
 } from 'typeorm';
 
-import { UserRole } from '../dto/create-user.dto';
+import { UserRole } from '../user-role.enum';
 
 @Entity('users')
 export class User {

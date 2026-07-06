@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+} from 'typeorm';
+
+import { PaymentStatus } from '../payment-status.enum';
 
 @Entity('payments')
 export class Payment {
@@ -8,16 +14,21 @@ export class Payment {
   @Column()
   companyId!: number;
 
-  @Column('decimal')
+  @Column('decimal', {
+    precision: 10,
+    scale: 2,
+  })
   amount!: number;
 
   @Column()
   paymentType!: string;
 
   @Column({
-    default: 'PENDING',
+    type: 'enum',
+    enum: PaymentStatus,
+    default: PaymentStatus.PENDING,
   })
-  status!: string;
+  status!: PaymentStatus;
 
   @Column({
     type: 'date',

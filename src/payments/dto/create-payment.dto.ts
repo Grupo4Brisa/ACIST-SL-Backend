@@ -15,7 +15,7 @@ export class CreatePaymentDto {
   @IsInt()
   companyId!: number;
 
-  @ApiProperty({ example: 199.90 })
+  @ApiProperty({ example: 199.9 })
   @Type(() => Number)
   @IsNumber()
   @IsPositive()
