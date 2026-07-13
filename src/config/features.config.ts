@@ -4,15 +4,20 @@ export default registerAs(
   'features',
   () => ({
 
-    associateArea: true,
+    associateArea:
+      process.env.ASSOCIATE_AREA === 'true',
 
-    associateLogin: true,
+    associateLogin:
+      process.env.ASSOCIATE_LOGIN === 'true',
 
-    associateEvents: true,
+    associateEvents:
+      process.env.ASSOCIATE_EVENTS === 'true',
 
-    landingPassword: true,
+    landingPassword:
+      process.env.LANDING_PASSWORD === 'true',
 
-    completionToken: false,
+    completionToken:
+      process.env.COMPLETION_TOKEN === 'false',
 
   }),
 );

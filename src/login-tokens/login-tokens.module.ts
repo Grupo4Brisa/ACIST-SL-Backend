@@ -7,9 +7,21 @@ import { LoginToken } from './entities/login-token.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([LoginToken]),
+    TypeOrmModule.forFeature([
+      LoginToken,
+    ]),
   ],
-  controllers: [LoginTokensController],
-  providers: [LoginTokensService],
+
+  controllers: [
+    LoginTokensController,
+  ],
+
+  providers: [
+    LoginTokensService,
+  ],
+
+  exports: [
+    LoginTokensService,
+  ],
 })
 export class LoginTokensModule {}

@@ -1,137 +1,144 @@
 import {
-  Body,
   Controller,
-  Delete,
   Get,
   Param,
-  ParseIntPipe,
-  Patch,
   Post,
+  Body,
+  UseGuards,
 } from '@nestjs/common';
 
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 
 import { LoginTokensService } from './login-tokens.service';
+
 import { CreateLoginTokenDto } from './dto/create-login-token.dto';
-import { UpdateLoginTokenDto } from './dto/update-login-token.dto';
+
+import { JwtAuthGuard } from '../auth/jwt.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../users/user-role.enum';
+
+
 
 @ApiTags('Login Tokens')
 @Controller('login-tokens')
 export class LoginTokensController {
+
+
   constructor(
-    private readonly loginTokensService: LoginTokensService,
+    private readonly loginTokensService:
+      LoginTokensService,
   ) {}
 
-  // =========================
-  // CREATE
-  // =========================
+
+
+
+  // =====================================
+  // CRIAR TOKEN
+  //
+  // Uso interno:
+  // após confirmação do pagamento
+  //
+  // Somente colaborador
+  // =====================================
   @Post()
-  @ApiOperation({ summary: 'Criar token de login' })
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard,
+  )
+  @ApiBearerAuth('access-token')
+  @Roles(
+    UserRole.COLABORADOR_ADMIN,
+    UserRole.COLABORADOR_APROVADOR,
+  )
+  @ApiOperation({
+    summary:
+      'Gerar token para completar cadastro',
+  })
   @ApiBody({
     type: CreateLoginTokenDto,
-    description: 'Dados para criação do token',
-  })
-  @ApiResponse({
-    status: 201,
-    description: 'Token criado com sucesso',
   })
   create(
     @Body()
-    createLoginTokenDto: CreateLoginTokenDto,
-  ) {
-    return this.loginTokensService.create(createLoginTokenDto);
-  }
+    body:CreateLoginTokenDto,
+  ){
 
-  // =========================
-  // FIND ALL
-  // =========================
-  @Get()
-  @ApiOperation({ summary: 'Listar tokens de login' })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de tokens retornada com sucesso',
-  })
-  findAll() {
-    return this.loginTokensService.findAll();
-  }
-
-  // =========================
-  // FIND ONE
-  // =========================
-  @Get(':id')
-  @ApiOperation({ summary: 'Buscar token por ID' })
-  @ApiParam({
-    name: 'id',
-    example: 1,
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Token encontrado',
-  })
-  @ApiResponse({
-    status: 404,
-    description: 'Token não encontrado',
-  })
-  findOne(
-    @Param('id', ParseIntPipe)
-    id: number,
-  ) {
-    return this.loginTokensService.findOne(id);
-  }
-
-  // =========================
-  // UPDATE
-  // =========================
-  @Patch(':id')
-  @ApiOperation({ summary: 'Atualizar token de login' })
-  @ApiParam({
-    name: 'id',
-    example: 1,
-  })
-  @ApiBody({
-    type: UpdateLoginTokenDto,
-    description: 'Dados para atualização do token',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Token atualizado com sucesso',
-  })
-  update(
-    @Param('id', ParseIntPipe)
-    id: number,
-
-    @Body()
-    updateLoginTokenDto: UpdateLoginTokenDto,
-  ) {
-    return this.loginTokensService.update(
-      id,
-      updateLoginTokenDto,
+    return this.loginTokensService.createToken(
+      body.companyId,
     );
+
   }
 
-  // =========================
-  // DELETE
-  // =========================
-  @Delete(':id')
-  @ApiOperation({ summary: 'Remover token de login' })
+
+
+
+
+
+  // =====================================
+  // VALIDAR TOKEN
+  //
+  // Público
+  //
+  // Usado pelo link enviado no email
+  // =====================================
+  @Get('validate/:token')
+  @ApiOperation({
+    summary:
+      'Validar token de conclusão de cadastro',
+  })
   @ApiParam({
-    name: 'id',
-    example: 1,
+    name:'token',
+    example:
+      '4af7d7d2-a640-4e6c-a53c-8d1b60b56d5d',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Token removido com sucesso',
-  })
-  remove(
-    @Param('id', ParseIntPipe)
-    id: number,
-  ) {
-    return this.loginTokensService.remove(id);
+  validate(
+    @Param('token')
+    token:string,
+  ){
+
+    return this.loginTokensService.validateToken(
+      token,
+    );
+
   }
+
+
+
+
+
+
+  // =====================================
+  // CONSUMIR TOKEN
+  //
+  // Após completar cadastro
+  // =====================================
+  @Post('consume/:token')
+  @ApiOperation({
+    summary:
+      'Consumir token após conclusão do cadastro',
+  })
+  @ApiParam({
+    name:'token',
+    example:
+      '4af7d7d2-a640-4e6c-a53c-8d1b60b56d5d',
+  })
+  consume(
+    @Param('token')
+    token:string,
+  ){
+
+    return this.loginTokensService.consumeToken(
+      token,
+    );
+
+  }
+
+
+
 }

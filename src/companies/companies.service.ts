@@ -5,11 +5,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { ConfigService } from '@nestjs/config';
+
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 
-import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcrypt';
 
 import { Company } from './entities/company.entity';
 
@@ -23,26 +24,27 @@ import { CompanyStatus } from './company-status.enum';
 import { ApprovalsService } from '../approvals/approvals.service';
 import { ApprovalAction } from '../approvals/approval-action.enum';
 
+import { LoginTokensService } from '../login-tokens/login-tokens.service';
 
 @Injectable()
 export class CompaniesService {
 
+constructor(
 
-  constructor(
+  @InjectRepository(Company)
+  private readonly companyRepository:
+    Repository<Company>,
 
-    @InjectRepository(Company)
-    private readonly companyRepository:
-      Repository<Company>,
+  private readonly approvalsService:
+    ApprovalsService,
 
+  private readonly configService:
+    ConfigService,
 
-    private readonly approvalsService:
-      ApprovalsService,
+  private readonly loginTokensService:
+    LoginTokensService,
 
-
-    private readonly configService:
-      ConfigService,
-
-  ) {}
+) {}
 
 
 
@@ -53,9 +55,11 @@ export class CompaniesService {
     filters: FilterCompanyDto,
   ) {
 
+
     const query =
       this.companyRepository
         .createQueryBuilder('company');
+
 
 
     if(filters.companyName){
@@ -77,6 +81,7 @@ export class CompaniesService {
     }
 
 
+
     if(filters.city){
 
       query.andWhere(
@@ -88,6 +93,7 @@ export class CompaniesService {
       );
 
     }
+
 
 
     if(filters.companySize){
@@ -103,6 +109,7 @@ export class CompaniesService {
     }
 
 
+
     if(filters.establishmentType){
 
       query.andWhere(
@@ -114,6 +121,7 @@ export class CompaniesService {
       );
 
     }
+
 
 
     if(filters.status){
@@ -129,9 +137,12 @@ export class CompaniesService {
     }
 
 
+
     return query.getMany();
 
   }
+
+
 
 
 
@@ -144,12 +155,16 @@ export class CompaniesService {
     id:number,
   ){
 
+
     const company =
       await this.companyRepository.findOne({
+
         where:{
           id,
         },
+
       });
+
 
 
     if(!company){
@@ -161,6 +176,7 @@ export class CompaniesService {
     }
 
 
+
     return company;
 
   }
@@ -169,8 +185,10 @@ export class CompaniesService {
 
 
 
+
+
   // =========================
-  // BUSCAR EMPRESA LOGIN
+  // LOGIN EMPRESA
   // =========================
   async findAuthCompanyByEmail(
     email:string,
@@ -181,6 +199,7 @@ export class CompaniesService {
       this.configService.get<boolean>(
         'features.associateLogin',
       );
+
 
 
     if(!associateLogin){
@@ -214,18 +233,13 @@ export class CompaniesService {
 
     });
 
-
   }
 
-
-
-
-
-  // =========================
-  // CADASTRO LANDING
+    // =========================
+  // CADASTRO INICIAL LANDING
   // =========================
   async createLanding(
-    companyData:CreateCompanyDto,
+    companyData: CreateCompanyDto,
   ){
 
 
@@ -260,6 +274,8 @@ export class CompaniesService {
 
 
 
+
+
     let passwordHash:
       string | undefined;
 
@@ -287,18 +303,24 @@ export class CompaniesService {
 
 
 
+
+
     const company =
       this.companyRepository.create({
 
         ...companyData,
 
+
         password:
           passwordHash,
+
 
         status:
           CompanyStatus.INCOMPLETE,
 
       });
+
+
 
 
 
@@ -309,6 +331,8 @@ export class CompaniesService {
 
 
 
+
+
     const {
       password,
       ...companyWithoutPassword
@@ -316,9 +340,12 @@ export class CompaniesService {
 
 
 
+
     return companyWithoutPassword;
 
   }
+
+
 
 
 
@@ -338,6 +365,7 @@ export class CompaniesService {
 
 
 
+
     if(
       company.status !==
       CompanyStatus.INCOMPLETE
@@ -351,6 +379,8 @@ export class CompaniesService {
 
 
 
+
+
     const updated =
       this.companyRepository.merge(
 
@@ -358,11 +388,13 @@ export class CompaniesService {
 
         {
 
+
           ...data,
 
 
           status:
             CompanyStatus.PENDING_APPROVAL,
+
 
 
           foundationDate:
@@ -373,12 +405,14 @@ export class CompaniesService {
               : undefined,
 
 
+
           associationDate:
             data.associationDate
               ? new Date(
                   data.associationDate,
                 )
               : undefined,
+
 
 
           employeesCount:
@@ -388,9 +422,12 @@ export class CompaniesService {
                 )
               : undefined,
 
+
         },
 
       );
+
+
 
 
 
@@ -400,20 +437,78 @@ export class CompaniesService {
 
   }
 
+  // =========================
+// COMPLETAR CADASTRO POR TOKEN
+// =========================
+async completeByToken(
+  token: string,
+  data: CompleteCompanyDto,
+) {
+
+  const loginToken =
+    await this.loginTokensService.findByToken(
+      token,
+    );
+
+  if (!loginToken) {
+
+    throw new NotFoundException(
+      'Token inválido.',
+    );
+
+  }
+
+  if (loginToken.used) {
+
+    throw new BadRequestException(
+      'Token já utilizado.',
+    );
+
+  }
+
+  if (
+    loginToken.expiresAt <
+    new Date()
+  ) {
+
+    throw new BadRequestException(
+      'Token expirado.',
+    );
+
+  }
+
+  const company =
+    await this.complete(
+      loginToken.companyId,
+      data,
+    );
+
+  await this.loginTokensService.markAsUsed(
+    token,
+  );
+
+  return company;
+
+}
+
+
+
 
 
 
 
   // =========================
-  // APROVAR
+  // APROVAR EMPRESA
   // =========================
   async approve(
     companyId:number,
     userId:number,
   ){
 
+
     const company =
       await this.findOne(companyId);
+
 
 
 
@@ -430,14 +525,19 @@ export class CompaniesService {
 
 
 
+
+
     company.status =
       CompanyStatus.ACTIVE;
+
 
 
 
     await this.companyRepository.save(
       company,
     );
+
+
 
 
 
@@ -450,10 +550,13 @@ export class CompaniesService {
       action:
         ApprovalAction.APPROVED,
 
+
       observation:
         'Empresa aprovada pelo aprovador.',
 
     });
+
+
 
 
 
@@ -465,16 +568,20 @@ export class CompaniesService {
 
 
 
+
+
   // =========================
-  // REPROVAR
+  // REPROVAR EMPRESA
   // =========================
   async reject(
     companyId:number,
     userId:number,
   ){
 
+
     const company =
       await this.findOne(companyId);
+
 
 
 
@@ -491,14 +598,19 @@ export class CompaniesService {
 
 
 
+
+
     company.status =
       CompanyStatus.INACTIVE;
+
 
 
 
     await this.companyRepository.save(
       company,
     );
+
+
 
 
 
@@ -511,6 +623,7 @@ export class CompaniesService {
       action:
         ApprovalAction.REJECTED,
 
+
       observation:
         'Empresa rejeitada pelo aprovador.',
 
@@ -518,35 +631,38 @@ export class CompaniesService {
 
 
 
+
+
     return company;
 
   }
 
-
-
-
-
   // =========================
-  // UPDATE
+  // ATUALIZAR EMPRESA
   // =========================
   async update(
-    id:number,
-    data:UpdateCompanyDto,
-  ){
-
+    id: number,
+    data: UpdateCompanyDto,
+  ) {
 
     const company =
       await this.findOne(id);
 
 
 
-    if(data.password){
+    if (data.password) {
 
-      data.password =
-        await bcrypt.hash(
-          data.password,
-          10,
-        );
+      data = {
+
+        ...data,
+
+        password:
+          await bcrypt.hash(
+            data.password,
+            10,
+          ),
+
+      };
 
     }
 
@@ -571,20 +687,18 @@ export class CompaniesService {
 
 
   // =========================
-  // REMOVER
+  // REMOVER EMPRESA
   // =========================
   async remove(
-    id:number,
-  ){
+    id: number,
+  ) {
 
     await this.findOne(id);
-
 
 
     await this.companyRepository.delete(
       id,
     );
-
 
 
     return {
@@ -595,5 +709,6 @@ export class CompaniesService {
     };
 
   }
+
 
 }

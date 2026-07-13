@@ -5,15 +5,32 @@ import { CompaniesController } from './companies.controller';
 import { CompaniesService } from './companies.service';
 
 import { Company } from './entities/company.entity';
-import { ApprovalsModule } from '../approvals/approvals.module'; // 👈 ADD AQUI
+
+import { ApprovalsModule } from '../approvals/approvals.module';
+import { LoginTokensModule } from '../login-tokens/login-tokens.module';
+
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Company]),
-    ApprovalsModule, // 👈 ESSENCIAL
+    TypeOrmModule.forFeature([
+      Company,
+    ]),
+
+    ApprovalsModule,
+
+    LoginTokensModule,
   ],
-  controllers: [CompaniesController],
-  providers: [CompaniesService],
-  exports: [CompaniesService],
+
+  controllers: [
+    CompaniesController,
+  ],
+
+  providers: [
+    CompaniesService,
+  ],
+
+  exports: [
+    CompaniesService,
+  ],
 })
 export class CompaniesModule {}
