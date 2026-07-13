@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
 import { CompanyStatus } from '../company-status.enum';
 
 @Entity('companies')
@@ -18,8 +25,13 @@ export class Company {
   @Column({ nullable: true })
   stateRegistration?: string;
 
-  @Column()
+  @Column({ unique: true })
   email!: string;
+
+  // Senha não aparece nas consultas normais.
+  // O login busca explicitamente usando select.
+  @Column({ select: false })
+  password!: string;
 
   @Column()
   phone!: string;
@@ -54,13 +66,22 @@ export class Company {
   @Column({ nullable: true })
   employeesCount?: number;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({
+    type: 'date',
+    nullable: true,
+  })
   foundationDate?: Date;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({
+    type: 'text',
+    nullable: true,
+  })
   eventPresentation?: string;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({
+    type: 'date',
+    nullable: true,
+  })
   associationDate?: Date;
 
   @Column({
@@ -70,13 +91,9 @@ export class Company {
   })
   status!: CompanyStatus;
 
-  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn()
   createdAt!: Date;
 
-  @Column({
-    type: 'timestamp',
-    default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
-  })
+  @UpdateDateColumn()
   updatedAt!: Date;
 }

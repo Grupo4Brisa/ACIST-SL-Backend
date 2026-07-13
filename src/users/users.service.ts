@@ -9,8 +9,10 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 
 import { User } from './entities/user.entity';
+
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+
 
 @Injectable()
 export class UsersService {
@@ -19,51 +21,16 @@ export class UsersService {
     private readonly userRepository: Repository<User>,
   ) {}
 
+
   // =========================
   // LISTAR USUÁRIOS
   // =========================
   findAll() {
     return this.userRepository.find({
-      select: ['id', 'name', 'email', 'role', 'active', 'createdAt'],
-    });
-  }
-
-  // =========================
-  // BUSCAR POR ID
-  // =========================
-  async findOne(id: number) {
-    const user = await this.userRepository.findOne({
-      where: { id },
-      select: ['id', 'name', 'email', 'role', 'active', 'createdAt'],
-    });
-
-    if (!user) {
-      throw new NotFoundException('Usuário não encontrado');
-    }
-
-    return user;
-  }
-
-  // =========================
-  // 🔐 BUSCAR POR EMAIL (LOGIN)
-  // =========================
-  findByEmail(email: string) {
-    return this.userRepository.findOne({
-      where: { email },
-    });
-  }
-
-  // =========================
-  // 🔐 BUSCAR USUÁRIO PARA AUTENTICAÇÃO (COM SENHA)
-  // =========================
-  findAuthUserByEmail(email: string) {
-    return this.userRepository.findOne({
-      where: { email },
       select: [
         'id',
         'name',
         'email',
-        'password',
         'role',
         'active',
         'createdAt',
@@ -71,81 +38,260 @@ export class UsersService {
     });
   }
 
+
+
+  // =========================
+  // BUSCAR USUÁRIO POR ID
+  // =========================
+  async findOne(id: number) {
+
+    const user =
+      await this.userRepository.findOne({
+        where: {
+          id,
+        },
+        select: [
+          'id',
+          'name',
+          'email',
+          'role',
+          'active',
+          'createdAt',
+        ],
+      });
+
+
+    if (!user) {
+      throw new NotFoundException(
+        'Usuário não encontrado',
+      );
+    }
+
+
+    return user;
+  }
+
+
+
+  // =========================
+  // BUSCAR POR EMAIL
+  // SEM SENHA
+  // =========================
+  findByEmail(email: string) {
+
+    return this.userRepository.findOne({
+      where: {
+        email,
+      },
+    });
+
+  }
+
+
+
+  // =========================
+  // BUSCAR USUÁRIO PARA LOGIN
+  // COM SENHA
+  // =========================
+  findAuthUserByEmail(email: string) {
+
+    return this.userRepository.findOne({
+      where: {
+        email,
+      },
+      select: [
+        'id',
+        'name',
+        'email',
+        'password',
+        'role',
+        'active',
+      ],
+    });
+
+  }
+
+
+
+  // =========================
+  // BUSCAR USUÁRIO PELO JWT
+  // SEM SENHA
+  // =========================
+  async findByIdForAuth(id: number) {
+
+    const user =
+      await this.userRepository.findOne({
+        where: {
+          id,
+        },
+        select: [
+          'id',
+          'name',
+          'email',
+          'role',
+          'active',
+        ],
+      });
+
+
+    if (!user) {
+      throw new NotFoundException(
+        'Usuário não encontrado',
+      );
+    }
+
+
+    return user;
+  }
+
+
+
   // =========================
   // CRIAR USUÁRIO
   // =========================
   async create(data: CreateUserDto) {
-    const exists = await this.userRepository.findOne({
-      where: { email: data.email },
-    });
+
+    const exists =
+      await this.userRepository.findOne({
+        where: {
+          email: data.email,
+        },
+      });
+
 
     if (exists) {
-      throw new ConflictException('Email já cadastrado');
+      throw new ConflictException(
+        'Email já cadastrado',
+      );
     }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const user = this.userRepository.create({
-      ...data,
-      password: hashedPassword,
-      active: data.active ?? true,
-    });
+    const hashedPassword =
+      await bcrypt.hash(
+        data.password,
+        10,
+      );
 
-    const saved = await this.userRepository.save(user);
 
-    const { password, ...userWithoutPassword } = saved;
+    const user =
+      this.userRepository.create({
+        ...data,
+        password: hashedPassword,
+        active: data.active ?? true,
+      });
+
+
+    const saved =
+      await this.userRepository.save(user);
+
+
+    const {
+      password,
+      ...userWithoutPassword
+    } = saved;
+
 
     return userWithoutPassword;
   }
 
+
+
   // =========================
   // ATUALIZAR USUÁRIO
   // =========================
-  async update(id: number, data: UpdateUserDto) {
-    const user = await this.userRepository.findOne({
-      where: { id },
-    });
+  async update(
+    id: number,
+    data: UpdateUserDto,
+  ) {
 
-    if (!user) {
-      throw new NotFoundException('Usuário não encontrado');
-    }
-
-    if (data.email) {
-      const emailExists = await this.userRepository.findOne({
-        where: { email: data.email },
+    const user =
+      await this.userRepository.findOne({
+        where: {
+          id,
+        },
       });
 
-      if (emailExists && emailExists.id !== id) {
-        throw new ConflictException('Email já está em uso');
-      }
+
+    if (!user) {
+      throw new NotFoundException(
+        'Usuário não encontrado',
+      );
     }
+
+
+
+    if (data.email) {
+
+      const emailExists =
+        await this.userRepository.findOne({
+          where: {
+            email: data.email,
+          },
+        });
+
+
+      if (
+        emailExists &&
+        emailExists.id !== id
+      ) {
+        throw new ConflictException(
+          'Email já está em uso',
+        );
+      }
+
+    }
+
+
 
     if (data.password) {
-      const hashedPassword = await bcrypt.hash(data.password, 10);
-      data = { ...data, password: hashedPassword };
+
+      data.password =
+        await bcrypt.hash(
+          data.password,
+          10,
+        );
+
     }
 
-    await this.userRepository.update(id, data);
+
+
+    await this.userRepository.update(
+      id,
+      data,
+    );
+
 
     return this.findOne(id);
   }
+
+
 
   // =========================
   // REMOVER USUÁRIO
   // =========================
   async remove(id: number) {
-    const user = await this.userRepository.findOne({
-      where: { id },
-    });
+
+    const user =
+      await this.userRepository.findOne({
+        where: {
+          id,
+        },
+      });
+
 
     if (!user) {
-      throw new NotFoundException('Usuário não encontrado');
+      throw new NotFoundException(
+        'Usuário não encontrado',
+      );
     }
+
 
     await this.userRepository.delete(id);
 
+
     return {
-      message: 'Usuário removido com sucesso',
+      message:
+        'Usuário removido com sucesso',
     };
   }
 }

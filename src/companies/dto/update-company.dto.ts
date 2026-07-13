@@ -1,5 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  Matches,
+  MinLength,
+} from 'class-validator';
+
 import { CompanyStatus } from '../company-status.enum';
 
 export class UpdateCompanyDto {
@@ -16,12 +24,22 @@ export class UpdateCompanyDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @Matches(/^\d{11}$|^\d{14}$/)
   cnpjcpf?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsEmail()
   email?: string;
+
+  @ApiPropertyOptional({
+    example: 'NovaSenha@123',
+    description: 'Nova senha da empresa',
+  })
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  password?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -33,7 +51,9 @@ export class UpdateCompanyDto {
   @IsString()
   companySize?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({
+    enum: CompanyStatus,
+  })
   @IsOptional()
   @IsEnum(CompanyStatus)
   status?: CompanyStatus;

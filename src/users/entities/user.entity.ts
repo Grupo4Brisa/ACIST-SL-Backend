@@ -4,7 +4,6 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  Index,
 } from 'typeorm';
 
 import { UserRole } from '../user-role.enum';
@@ -17,11 +16,10 @@ export class User {
   @Column()
   name!: string;
 
-  @Index({ unique: true })
-  @Column()
+  @Column({ unique: true })
   email!: string;
 
-  @Column()
+  @Column({ select: false })
   password!: string;
 
   @Column({

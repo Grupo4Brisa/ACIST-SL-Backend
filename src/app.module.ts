@@ -2,8 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import featuresConfig from './config/features.config';
 
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
@@ -21,44 +20,124 @@ import { EventRegistrationsModule } from './event-registrations/event-registrati
 import { SocialNetworksModule } from './social-networks/social-networks.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { LoginTokensModule } from './login-tokens/login-tokens.module';
+
+
 @Module({
   imports: [
+
+    // =========================
+    // CONFIGURAÇÕES
+    // =========================
     ConfigModule.forRoot({
       isGlobal: true,
+
+      load: [
+        featuresConfig,
+      ],
     }),
 
+
+
+    // =========================
+    // BANCO DE DADOS
+    // =========================
     TypeOrmModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+
+      inject: [
+        ConfigService,
+      ],
+
+      useFactory: (
+        config: ConfigService,
+      ) => ({
+
         type: 'postgres',
-        host: config.get<string>('DATABASE_HOST'),
-        port: Number(config.get<string>('DATABASE_PORT')),
-        username: config.get<string>('DATABASE_USER'),
-        password: config.get<string>('DATABASE_PASSWORD'),
-        database: config.get<string>('DATABASE_NAME'),
+
+        host:
+          config.get<string>(
+            'DATABASE_HOST',
+          ),
+
+        port:
+          Number(
+            config.get<string>(
+              'DATABASE_PORT',
+            ),
+          ),
+
+        username:
+          config.get<string>(
+            'DATABASE_USER',
+          ),
+
+        password:
+          config.get<string>(
+            'DATABASE_PASSWORD',
+          ),
+
+        database:
+          config.get<string>(
+            'DATABASE_NAME',
+          ),
+
         autoLoadEntities: true,
+
         synchronize: true,
+
       }),
+
     }),
+
+
+
+    // =========================
+    // MÓDULOS
+    // =========================
 
     AuthModule,
+
     UsersModule,
+
     CompaniesModule,
+
     CompanyContactsModule,
+
     DocumentsModule,
+
     ApprovalsModule,
+
     TasksModule,
+
     PaymentsModule,
+
     TermsAcceptanceModule,
+
     SolutionsModule,
+
     CompanySolutionsModule,
+
     EventsModule,
+
     EventRegistrationsModule,
+
     SocialNetworksModule,
+
     AnnouncementsModule,
+
     DashboardModule,
+
+    LoginTokensModule,
+
   ],
-  controllers: [AppController],
-  providers: [AppService],
+
+
+  controllers: [
+  ],
+
+
+  providers: [
+  ],
+
 })
 export class AppModule {}
