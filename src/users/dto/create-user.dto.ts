@@ -4,15 +4,19 @@ import {
 } from '@nestjs/swagger';
 
 import {
+  IsBoolean,
   IsEmail,
+  IsEnum,
   IsNotEmpty,
+  IsOptional,
   IsString,
   MinLength,
-  IsOptional,
-  IsBoolean,
 } from 'class-validator';
 
+import { UserRole } from '../user-role.enum';
+
 export class CreateUserDto {
+
   @ApiProperty({
     example: 'Gabriela Lima',
   })
@@ -20,13 +24,12 @@ export class CreateUserDto {
   @IsNotEmpty()
   name!: string;
 
-
   @ApiProperty({
     example: 'gabriela@email.com',
   })
   @IsEmail()
+  @IsNotEmpty()
   email!: string;
-
 
   @ApiProperty({
     example: '123456',
@@ -35,6 +38,13 @@ export class CreateUserDto {
   @MinLength(6)
   password!: string;
 
+  @ApiProperty({
+    enum: UserRole,
+    example: UserRole.COLABORADOR_ADMIN,
+    description: 'Perfil do colaborador',
+  })
+  @IsEnum(UserRole)
+  role!: UserRole;
 
   @ApiPropertyOptional({
     example: true,
@@ -42,4 +52,5 @@ export class CreateUserDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
 }

@@ -30,10 +30,7 @@ import { JwtAuthGuard } from '../auth/jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
-
 @ApiTags('Users')
-@ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
 export class UsersController {
 
@@ -41,106 +38,137 @@ export class UsersController {
     private readonly usersService: UsersService,
   ) {}
 
-
   // =========================
   // LISTAR USUÁRIOS
   // SOMENTE ADMIN
   // =========================
   @Get()
-  @Roles(UserRole.COLABORADOR_ADMIN)
+  @ApiBearerAuth('access-token')
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard,
+  )
+  @Roles(
+    UserRole.COLABORADOR_ADMIN,
+  )
   @ApiOperation({
-    summary:'Listar todos os usuários',
+    summary: 'Listar todos os usuários',
   })
-  findAll(){
+  findAll() {
     return this.usersService.findAll();
   }
-
-
 
   // =========================
   // BUSCAR POR ID
   // SOMENTE ADMIN
   // =========================
   @Get(':id')
-  @Roles(UserRole.COLABORADOR_ADMIN)
+  @ApiBearerAuth('access-token')
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard,
+  )
+  @Roles(
+    UserRole.COLABORADOR_ADMIN,
+  )
   @ApiOperation({
-    summary:'Buscar usuário por ID',
+    summary: 'Buscar usuário por ID',
   })
   @ApiParam({
-    name:'id',
-    example:1,
+    name: 'id',
+    example: 1,
   })
   findOne(
-    @Param('id', ParseIntPipe)
-    id:number,
-  ){
+    @Param(
+      'id',
+      ParseIntPipe,
+    )
+    id: number,
+  ) {
     return this.usersService.findOne(id);
   }
 
-
-
   // =========================
   // CRIAR USUÁRIO
-  // SOMENTE ADMIN
+  // PÚBLICO
   // =========================
   @Post()
-  @Roles(UserRole.COLABORADOR_ADMIN)
   @ApiOperation({
-    summary:'Criar novo usuário',
+    summary: 'Criar novo colaborador',
   })
   @ApiBody({
-    type:CreateUserDto,
+    type: CreateUserDto,
   })
   @ApiResponse({
-    status:201,
-    description:'Usuário criado com sucesso',
+    status: 201,
+    description: 'Usuário criado com sucesso',
   })
   create(
     @Body()
-    body:CreateUserDto,
-  ){
+    body: CreateUserDto,
+  ) {
     return this.usersService.create(body);
   }
-
-
 
   // =========================
   // ATUALIZAR USUÁRIO
   // SOMENTE ADMIN
   // =========================
   @Patch(':id')
-  @Roles(UserRole.COLABORADOR_ADMIN)
+  @ApiBearerAuth('access-token')
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard,
+  )
+  @Roles(
+    UserRole.COLABORADOR_ADMIN,
+  )
   @ApiOperation({
-    summary:'Atualizar usuário',
+    summary: 'Atualizar usuário',
   })
   update(
-    @Param('id', ParseIntPipe)
-    id:number,
+    @Param(
+      'id',
+      ParseIntPipe,
+    )
+    id: number,
 
     @Body()
-    body:UpdateUserDto,
-  ){
+    body: UpdateUserDto,
+  ) {
     return this.usersService.update(
       id,
       body,
     );
   }
 
-
-
   // =========================
   // REMOVER USUÁRIO
   // SOMENTE ADMIN
   // =========================
   @Delete(':id')
-  @Roles(UserRole.COLABORADOR_ADMIN)
+  @ApiBearerAuth('access-token')
+  @UseGuards(
+    JwtAuthGuard,
+    RolesGuard,
+  )
+  @Roles(
+    UserRole.COLABORADOR_ADMIN,
+  )
   @ApiOperation({
-    summary:'Remover usuário',
+    summary: 'Remover usuário',
+  })
+  @ApiParam({
+    name: 'id',
+    example: 1,
   })
   remove(
-    @Param('id', ParseIntPipe)
-    id:number,
-  ){
+    @Param(
+      'id',
+      ParseIntPipe,
+    )
+    id: number,
+  ) {
     return this.usersService.remove(id);
   }
 }

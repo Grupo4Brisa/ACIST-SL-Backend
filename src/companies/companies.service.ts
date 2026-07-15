@@ -3,6 +3,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 
 import { ConfigService } from '@nestjs/config';
@@ -46,8 +47,6 @@ constructor(
 
 ) {}
 
-
-
   // =========================
   // LISTAR EMPRESAS
   // =========================
@@ -80,8 +79,6 @@ constructor(
 
     }
 
-
-
     if(filters.city){
 
       query.andWhere(
@@ -93,8 +90,6 @@ constructor(
       );
 
     }
-
-
 
     if(filters.companySize){
 
@@ -108,8 +103,6 @@ constructor(
 
     }
 
-
-
     if(filters.establishmentType){
 
       query.andWhere(
@@ -121,8 +114,6 @@ constructor(
       );
 
     }
-
-
 
     if(filters.status){
 
@@ -142,12 +133,6 @@ constructor(
 
   }
 
-
-
-
-
-
-
   // =========================
   // BUSCAR POR ID
   // =========================
@@ -165,8 +150,6 @@ constructor(
 
       });
 
-
-
     if(!company){
 
       throw new NotFoundException(
@@ -180,12 +163,6 @@ constructor(
     return company;
 
   }
-
-
-
-
-
-
 
   // =========================
   // LOGIN EMPRESA
@@ -207,8 +184,6 @@ constructor(
       return null;
 
     }
-
-
 
     return this.companyRepository.findOne({
 
@@ -272,21 +247,13 @@ constructor(
 
     }
 
-
-
-
-
     let passwordHash:
       string | undefined;
-
-
 
     const landingPassword =
       this.configService.get<boolean>(
         'features.landingPassword',
       );
-
-
 
     if(
       landingPassword &&
@@ -300,10 +267,6 @@ constructor(
         );
 
     }
-
-
-
-
 
     const company =
       this.companyRepository.create({
@@ -320,122 +283,111 @@ constructor(
 
       });
 
-
-
-
-
     const saved =
       await this.companyRepository.save(
         company,
       );
-
-
-
-
 
     const {
       password,
       ...companyWithoutPassword
     } = saved;
 
-
-
-
     return companyWithoutPassword;
 
   }
+ // =========================
+// COMPLETAR CADASTRO
+// =========================
+async complete(
+  id: number,
+  data: CompleteCompanyDto,
+  user: any,
+) {
+
+  
+  const company =
+  await this.findOne(id);
+
+
+console.log('USER RECEBIDO:', user);
+console.log('COMPANY ID:', company.id);
+
+
+if (
+  user.type === 'COMPANY' &&
+  Number(user.id) !== Number(company.id)
+) {
+
+  throw new UnauthorizedException(
+    'Empresa não autorizada a alterar este cadastro.',
+  );
+
+}
 
 
 
 
+  if (
+    company.status !== CompanyStatus.INCOMPLETE
+  ) {
 
-
-
-  // =========================
-  // COMPLETAR CADASTRO
-  // =========================
-  async complete(
-    id:number,
-    data:CompleteCompanyDto,
-  ){
-
-
-    const company =
-      await this.findOne(id);
-
-
-
-
-    if(
-      company.status !==
-      CompanyStatus.INCOMPLETE
-    ){
-
-      throw new BadRequestException(
-        'Cadastro já concluído.',
-      );
-
-    }
-
-
-
-
-
-    const updated =
-      this.companyRepository.merge(
-
-        company,
-
-        {
-
-
-          ...data,
-
-
-          status:
-            CompanyStatus.PENDING_APPROVAL,
-
-
-
-          foundationDate:
-            data.foundationDate
-              ? new Date(
-                  data.foundationDate,
-                )
-              : undefined,
-
-
-
-          associationDate:
-            data.associationDate
-              ? new Date(
-                  data.associationDate,
-                )
-              : undefined,
-
-
-
-          employeesCount:
-            data.employeesCount !== undefined
-              ? Number(
-                  data.employeesCount,
-                )
-              : undefined,
-
-
-        },
-
-      );
-
-
-
-
-
-    return this.companyRepository.save(
-      updated,
+    throw new BadRequestException(
+      'Cadastro já concluído.',
     );
 
   }
+
+
+
+  const updated =
+    this.companyRepository.merge(
+      company,
+      {
+
+        ...data,
+
+
+        status:
+          CompanyStatus.PENDING_APPROVAL,
+
+
+
+        foundationDate:
+          data.foundationDate
+            ? new Date(
+                data.foundationDate,
+              )
+            : undefined,
+
+
+
+        associationDate:
+          data.associationDate
+            ? new Date(
+                data.associationDate,
+              )
+            : undefined,
+
+
+
+        employeesCount:
+          data.employeesCount !== undefined
+            ? Number(
+                data.employeesCount,
+              )
+            : undefined,
+
+      },
+    );
+
+
+
+  return this.companyRepository.save(
+    updated,
+  );
+
+}
 
   // =========================
 // COMPLETAR CADASTRO POR TOKEN
@@ -450,6 +402,7 @@ async completeByToken(
       token,
     );
 
+
   if (!loginToken) {
 
     throw new NotFoundException(
@@ -458,6 +411,7 @@ async completeByToken(
 
   }
 
+
   if (loginToken.used) {
 
     throw new BadRequestException(
@@ -465,6 +419,7 @@ async completeByToken(
     );
 
   }
+
 
   if (
     loginToken.expiresAt <
@@ -477,25 +432,26 @@ async completeByToken(
 
   }
 
+
   const company =
     await this.complete(
       loginToken.companyId,
       data,
+      {
+        type: 'TOKEN',
+        sub: loginToken.companyId,
+      },
     );
+
 
   await this.loginTokensService.markAsUsed(
     token,
   );
 
+
   return company;
 
 }
-
-
-
-
-
-
 
   // =========================
   // APROVAR EMPRESA
@@ -509,9 +465,6 @@ async completeByToken(
     const company =
       await this.findOne(companyId);
 
-
-
-
     if(
       company.status !==
       CompanyStatus.PENDING_APPROVAL
@@ -523,23 +476,11 @@ async completeByToken(
 
     }
 
-
-
-
-
     company.status =
       CompanyStatus.ACTIVE;
-
-
-
-
     await this.companyRepository.save(
       company,
     );
-
-
-
-
 
     await this.approvalsService.createLog({
 
@@ -556,20 +497,9 @@ async completeByToken(
 
     });
 
-
-
-
-
     return company;
 
   }
-
-
-
-
-
-
-
   // =========================
   // REPROVAR EMPRESA
   // =========================
@@ -582,9 +512,6 @@ async completeByToken(
     const company =
       await this.findOne(companyId);
 
-
-
-
     if(
       company.status !==
       CompanyStatus.PENDING_APPROVAL
@@ -596,23 +523,12 @@ async completeByToken(
 
     }
 
-
-
-
-
     company.status =
       CompanyStatus.INACTIVE;
-
-
-
 
     await this.companyRepository.save(
       company,
     );
-
-
-
-
 
     await this.approvalsService.createLog({
 
@@ -629,62 +545,52 @@ async completeByToken(
 
     });
 
-
-
-
-
     return company;
 
   }
 
   // =========================
-  // ATUALIZAR EMPRESA
-  // =========================
-  async update(
-    id: number,
-    data: UpdateCompanyDto,
-  ) {
+// ATUALIZAR EMPRESA
+// =========================
+async update(
+  id: number,
+  data: UpdateCompanyDto,
+  user?: any,
+) {
 
-    const company =
-      await this.findOne(id);
-
-
-
-    if (data.password) {
-
-      data = {
-
-        ...data,
-
-        password:
-          await bcrypt.hash(
-            data.password,
-            10,
-          ),
-
-      };
-
-    }
+  const company =
+    await this.findOne(id);
 
 
+  if (data.password) {
 
-    const updated =
-      this.companyRepository.merge(
-        company,
-        data,
-      );
+    data = {
 
+      ...data,
 
+      password:
+        await bcrypt.hash(
+          data.password,
+          10,
+        ),
 
-    return this.companyRepository.save(
-      updated,
-    );
+    };
 
   }
 
 
+  const updated =
+    this.companyRepository.merge(
+      company,
+      data,
+    );
 
 
+  return this.companyRepository.save(
+    updated,
+  );
+
+}
 
   // =========================
   // REMOVER EMPRESA
@@ -709,6 +615,5 @@ async completeByToken(
     };
 
   }
-
 
 }

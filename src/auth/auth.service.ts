@@ -16,11 +16,16 @@ import { CompanyStatus } from '../companies/company-status.enum';
 export class AuthService {
 
   constructor(
-    private readonly usersService: UsersService,
 
-    private readonly companiesService: CompaniesService,
+    private readonly usersService:
+      UsersService,
 
-    private readonly jwtService: JwtService,
+    private readonly companiesService:
+      CompaniesService,
+
+    private readonly jwtService:
+      JwtService,
+
   ) {}
 
 
@@ -164,13 +169,16 @@ export class AuthService {
 
 
 
+    // Empresas INCOMPLETE e PENDING_APPROVAL
+    // podem acessar a área delas.
+    // Apenas empresas INACTIVE são bloqueadas.
     if (
-      company.status !==
-      CompanyStatus.ACTIVE
+      company.status ===
+      CompanyStatus.INACTIVE
     ) {
 
       throw new UnauthorizedException(
-        'Empresa ainda não está ativa.',
+        'Empresa inativa.',
       );
 
     }
@@ -184,6 +192,8 @@ export class AuthService {
       type: 'COMPANY',
 
       email: company.email,
+
+      status: company.status,
 
     };
 
