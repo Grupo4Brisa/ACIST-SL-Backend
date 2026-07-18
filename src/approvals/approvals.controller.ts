@@ -4,7 +4,6 @@ import {
   Param,
   ParseIntPipe,
   UseGuards,
-  Req,
 } from '@nestjs/common';
 
 import {
@@ -22,38 +21,49 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/user-role.enum';
 
+
 @ApiTags('Approvals')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(
+  UserRole.COLABORADOR_ADMIN,
+  UserRole.COLABORADOR_APROVADOR,
+)
 @Controller('approvals')
 export class ApprovalsController {
+
   constructor(
     private readonly approvalsService: ApprovalsService,
   ) {}
+
 
   // =========================
   // LISTAR HISTÓRICO COMPLETO
   // =========================
   @Get()
-  @ApiOperation({ summary: 'Listar histórico de aprovações' })
+  @ApiOperation({
+    summary: 'Listar histórico de aprovações',
+  })
   @ApiResponse({
     status: 200,
     description: 'Lista de aprovações retornada com sucesso',
   })
-  @Roles(
-    UserRole.COLABORADOR_ADMIN,
-    UserRole.COLABORADOR_APROVADOR,
-  )
   findAll() {
     return this.approvalsService.findAll();
   }
+
 
   // =========================
   // BUSCAR POR ID
   // =========================
   @Get(':id')
-  @ApiOperation({ summary: 'Buscar aprovação por ID' })
-  @ApiParam({ name: 'id', example: 1 })
+  @ApiOperation({
+    summary: 'Buscar aprovação por ID',
+  })
+  @ApiParam({
+    name: 'id',
+    example: 1,
+  })
   @ApiResponse({
     status: 200,
     description: 'Aprovação encontrada',
@@ -62,10 +72,6 @@ export class ApprovalsController {
     status: 404,
     description: 'Aprovação não encontrada',
   })
-  @Roles(
-    UserRole.COLABORADOR_ADMIN,
-    UserRole.COLABORADOR_APROVADOR,
-  )
   findOne(
     @Param('id', ParseIntPipe)
     id: number,
@@ -73,24 +79,27 @@ export class ApprovalsController {
     return this.approvalsService.findOne(id);
   }
 
+
   // =========================
-  // LISTAR POR EMPRESA
+  // LISTAR HISTÓRICO POR EMPRESA
   // =========================
   @Get('company/:companyId')
-  @ApiOperation({ summary: 'Listar aprovações por empresa' })
-  @ApiParam({ name: 'companyId', example: 1 })
+  @ApiOperation({
+    summary: 'Listar histórico de aprovações por empresa',
+  })
+  @ApiParam({
+    name: 'companyId',
+    example: 1,
+  })
   @ApiResponse({
     status: 200,
     description: 'Histórico da empresa retornado com sucesso',
   })
-  @Roles(
-    UserRole.COLABORADOR_ADMIN,
-    UserRole.COLABORADOR_APROVADOR,
-  )
   findByCompany(
     @Param('companyId', ParseIntPipe)
     companyId: number,
   ) {
     return this.approvalsService.findByCompany(companyId);
   }
+
 }

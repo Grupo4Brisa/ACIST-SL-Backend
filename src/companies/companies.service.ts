@@ -453,53 +453,59 @@ async completeByToken(
 
 }
 
-  // =========================
-  // APROVAR EMPRESA
-  // =========================
-  async approve(
-    companyId:number,
-    userId:number,
-  ){
+// =========================
+// APROVAR EMPRESA
+// =========================
+async approve(
+  companyId: number,
+  userId: number,
+) {
+  const company = await this.findOne(companyId);
 
+  if (
+    company.status !== CompanyStatus.PENDING_APPROVAL
+  ) {
+    throw new BadRequestException(
+      'Empresa não está aguardando aprovação.',
+    );
+  }
 
-    const company =
-      await this.findOne(companyId);
+  company.status = CompanyStatus.ACTIVE;
 
-    if(
-      company.status !==
-      CompanyStatus.PENDING_APPROVAL
-    ){
+  await this.companyRepository.save(company);
 
-      throw new BadRequestException(
-        'Empresa não está aguardando aprovação.',
-      );
+  await this.approvalsService.createLog({
+    companyId,
+    userId,
+    action: ApprovalAction.APPROVED,
+    observation: 'Empresa aprovada pelo aprovador.',
+  });
 
-    }
-
-    company.status =
-      CompanyStatus.ACTIVE;
-    await this.companyRepository.save(
-      company,
+  // Verifica se a área do associado está habilitada
+  const associateLogin =
+    this.configService.get<boolean>(
+      'features.associateLogin',
     );
 
-    await this.approvalsService.createLog({
+  // Se NÃO existir área do associado,
+  // gera o token para completar o cadastro.
+  if (!associateLogin) {
+    const loginToken =
+      await this.loginTokensService.createToken(
+        company.id,
+      );
 
-      companyId,
-
-      userId,
-
-      action:
-        ApprovalAction.APPROVED,
-
-
-      observation:
-        'Empresa aprovada pelo aprovador.',
-
-    });
-
-    return company;
-
+    return {
+      company,
+      completionToken: loginToken.token,
+      expiresAt: loginToken.expiresAt,
+    };
   }
+
+  // Caso exista área do associado,
+  // apenas retorna a empresa aprovada.
+  return company;
+}
   // =========================
   // REPROVAR EMPRESA
   // =========================

@@ -29,8 +29,12 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/user-role.enum';
 
 @ApiTags('Payments')
-@ApiBearerAuth()
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(
+  UserRole.COLABORADOR_ADMIN,
+  UserRole.COLABORADOR_APROVADOR,
+)
 @Controller('payments')
 export class PaymentsController {
   constructor(
