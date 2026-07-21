@@ -5,6 +5,7 @@ import { DocumentType } from '../document-type.enum';
 
 @Entity('documents')
 export class Document {
+
   @PrimaryGeneratedColumn()
   id!: number;
 
@@ -21,7 +22,15 @@ export class Document {
   fileName!: string;
 
   @Column()
-  filePath!: string;
+  mimeType!: string;
+
+  @Column()
+  fileSize!: number;
+
+  @Column({
+    type: 'bytea',
+  })
+  fileContent!: Buffer;
 
   @Column({
     type: 'enum',
@@ -35,4 +44,5 @@ export class Document {
     default: () => 'CURRENT_TIMESTAMP',
   })
   uploadedAt!: Date;
+
 }

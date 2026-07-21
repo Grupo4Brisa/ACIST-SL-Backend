@@ -1,4 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
 import {
   IsEmail,
   IsEnum,
@@ -9,8 +10,10 @@ import {
 } from 'class-validator';
 
 import { CompanyStatus } from '../company-status.enum';
+import { CompanyOrigin } from '../company-origin.enum';
 
 export class UpdateCompanyDto {
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -52,9 +55,19 @@ export class UpdateCompanyDto {
   companySize?: string;
 
   @ApiPropertyOptional({
+    enum: CompanyOrigin,
+    example: CompanyOrigin.WEBSITE,
+    description: 'Origem da empresa',
+  })
+  @IsOptional()
+  @IsEnum(CompanyOrigin)
+  origin?: CompanyOrigin;
+
+  @ApiPropertyOptional({
     enum: CompanyStatus,
   })
   @IsOptional()
   @IsEnum(CompanyStatus)
   status?: CompanyStatus;
+
 }

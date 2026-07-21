@@ -1,13 +1,19 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
+
 import { Type } from 'class-transformer';
+
 import {
   IsDateString,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
 
+import { CompanyOrigin } from '../company-origin.enum';
+
 export class CompleteCompanyDto {
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -73,4 +79,14 @@ export class CompleteCompanyDto {
   @IsOptional()
   @IsDateString()
   associationDate?: string;
+
+  @ApiPropertyOptional({
+    enum: CompanyOrigin,
+    example: CompanyOrigin.WEBSITE,
+    description: 'Origem da empresa',
+  })
+  @IsOptional()
+  @IsEnum(CompanyOrigin)
+  origin?: CompanyOrigin;
+
 }

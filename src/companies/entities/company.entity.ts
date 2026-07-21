@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 
 import { CompanyStatus } from '../company-status.enum';
+import { CompanyOrigin } from '../company-origin.enum';
 
 @Entity('companies')
 export class Company {
@@ -38,6 +39,13 @@ export class Company {
 
   @Column()
   companySize!: string;
+
+  @Column({
+    type: 'enum',
+    enum: CompanyOrigin,
+    nullable: true,
+  })
+  origin?: CompanyOrigin;
 
   @Column({ nullable: true })
   website?: string;

@@ -1,7 +1,11 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 
 import {
   IsEmail,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -9,9 +13,9 @@ import {
   MinLength,
 } from 'class-validator';
 
+import { CompanyOrigin } from '../company-origin.enum';
 
 export class CreateCompanyDto {
-
 
   @ApiProperty({
     example: 'Empresa XYZ',
@@ -80,5 +84,16 @@ export class CreateCompanyDto {
   @IsString()
   @IsNotEmpty()
   companySize!: string;
+
+
+
+  @ApiPropertyOptional({
+    enum: CompanyOrigin,
+    example: CompanyOrigin.WEBSITE,
+    description: 'Origem da empresa',
+  })
+  @IsOptional()
+  @IsEnum(CompanyOrigin)
+  origin?: CompanyOrigin;
 
 }
