@@ -1,19 +1,22 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 
 import {
+  IsDateString,
   IsEmail,
   IsEnum,
+  IsNumber,
   IsOptional,
   IsString,
   Matches,
   MinLength,
 } from 'class-validator';
 
+import { Type } from 'class-transformer';
+
 import { CompanyStatus } from '../company-status.enum';
 import { CompanyOrigin } from '../company-origin.enum';
 
 export class UpdateCompanyDto {
-
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
@@ -63,11 +66,84 @@ export class UpdateCompanyDto {
   @IsEnum(CompanyOrigin)
   origin?: CompanyOrigin;
 
+  // =========================
+  // DADOS COMPLEMENTARES
+  // =========================
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  stateRegistration?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  website?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  neighborhood?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  zipCode?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  establishmentType?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  headquartersType?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  employeesCount?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  foundationDate?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  eventPresentation?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsDateString()
+  associationDate?: string;
+
+  // =========================
+  // STATUS
+  // =========================
+
   @ApiPropertyOptional({
     enum: CompanyStatus,
   })
   @IsOptional()
   @IsEnum(CompanyStatus)
   status?: CompanyStatus;
-
 }

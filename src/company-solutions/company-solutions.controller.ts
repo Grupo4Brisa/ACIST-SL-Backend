@@ -8,6 +8,7 @@ import {
   Delete,
 } from '@nestjs/common';
 
+
 import {
   ApiTags,
   ApiOperation,
@@ -16,72 +17,266 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 
+
 import { CompanySolutionsService } from './company-solutions.service';
+
 import { CreateCompanySolutionDto } from './dto/create-company-solution.dto';
+
 import { UpdateCompanySolutionDto } from './dto/update-company-solution.dto';
+
+
 
 @ApiTags('Company Solutions')
 @Controller('company-solutions')
 export class CompanySolutionsController {
-  constructor(private readonly service: CompanySolutionsService) {}
 
-  // CREATE
+
+  constructor(
+    private readonly service: CompanySolutionsService,
+  ) {}
+
+
+
+
+
+  /*
+  ==================================================
+      VINCULAR UMA SOLUÇÃO
+  ==================================================
+  */
+
+
   @Post()
   @ApiOperation({
-    summary: 'Criar vínculo entre empresa e solução',
-    description:
-      'Associa uma solução a uma empresa. Não permite duplicidade.',
+    summary: 'Criar vínculo empresa x solução',
   })
-  @ApiBody({ type: CreateCompanySolutionDto })
-  @ApiResponse({ status: 201, description: 'Vínculo criado com sucesso' })
-  create(@Body() body: CreateCompanySolutionDto) {
+  @ApiBody({
+    type: CreateCompanySolutionDto,
+  })
+  @ApiResponse({
+    status:201,
+    description:'Vínculo criado com sucesso',
+  })
+  create(
+    @Body() body: CreateCompanySolutionDto,
+  ){
+
     return this.service.create(body);
+
   }
 
-  // READ ALL
+
+
+
+
+
+
+
+  /*
+  ==================================================
+      SALVAR TODAS AS SOLUÇÕES DA EMPRESA
+  ==================================================
+  */
+
+
+  @Post('company/:companyId')
+  @ApiOperation({
+    summary:
+      'Salvar múltiplas soluções selecionadas pela empresa',
+  })
+  @ApiParam({
+    name:'companyId',
+    example:1,
+  })
+  @ApiBody({
+
+    schema:{
+
+      example:{
+
+        solutionIds:[
+          1,
+          2,
+          3
+        ]
+
+      }
+
+    }
+
+  })
+  @ApiResponse({
+    status:201,
+    description:
+      'Soluções vinculadas com sucesso',
+  })
+
+
+  createMany(
+
+    @Param('companyId') companyId:string,
+
+    @Body()
+    body:{
+      solutionIds:number[]
+    }
+
+  ){
+
+    return this.service.createMany(
+
+      Number(companyId),
+
+      body.solutionIds
+
+    );
+
+  }
+
+
+
+
+
+
+
+
+
+
+  /*
+  ==================================================
+      LISTAR VÍNCULOS
+  ==================================================
+  */
+
+
   @Get()
   @ApiOperation({
-    summary: 'Listar todos os vínculos empresa x solução',
+    summary:
+      'Listar vínculos empresa x solução',
   })
-  @ApiResponse({ status: 200, description: 'Lista retornada com sucesso' })
-  findAll() {
+  findAll(){
+
     return this.service.findAll();
+
   }
 
-  // READ ONE
+
+
+
+
+
+
+
+
+  /*
+  ==================================================
+      BUSCAR POR ID
+  ==================================================
+  */
+
+
   @Get(':id')
   @ApiOperation({
-    summary: 'Buscar vínculo por ID',
+    summary:
+      'Buscar vínculo por ID',
   })
-  @ApiParam({ name: 'id', example: 1 })
-  @ApiResponse({ status: 200, description: 'Registro encontrado' })
-  @ApiResponse({ status: 404, description: 'Registro não encontrado' })
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(+id);
+  @ApiParam({
+    name:'id',
+    example:1,
+  })
+  findOne(
+    @Param('id') id:string,
+  ){
+
+    return this.service.findOne(
+      Number(id)
+    );
+
   }
 
-  // UPDATE
+
+
+
+
+
+
+
+
+  /*
+  ==================================================
+      ATUALIZAR VÍNCULO
+  ==================================================
+  */
+
+
   @Patch(':id')
   @ApiOperation({
-    summary: 'Atualizar vínculo empresa x solução',
+    summary:
+      'Atualizar vínculo empresa x solução',
   })
-  @ApiParam({ name: 'id', example: 1 })
-  @ApiBody({ type: UpdateCompanySolutionDto })
+  @ApiParam({
+    name:'id',
+    example:1,
+  })
+  @ApiBody({
+    type:UpdateCompanySolutionDto,
+  })
+
+
   update(
-    @Param('id') id: string,
-    @Body() body: UpdateCompanySolutionDto,
-  ) {
-    return this.service.update(+id, body);
+
+    @Param('id') id:string,
+
+    @Body()
+    body:UpdateCompanySolutionDto,
+
+  ){
+
+    return this.service.update(
+
+      Number(id),
+
+      body
+
+    );
+
   }
 
-  // DELETE
+
+
+
+
+
+
+
+
+  /*
+  ==================================================
+      REMOVER
+  ==================================================
+  */
+
+
   @Delete(':id')
   @ApiOperation({
-    summary: 'Remover vínculo empresa x solução',
+    summary:
+      'Remover vínculo empresa x solução',
   })
-  @ApiParam({ name: 'id', example: 1 })
-  @ApiResponse({ status: 200, description: 'Removido com sucesso' })
-  remove(@Param('id') id: string) {
-    return this.service.remove(+id);
+
+  @ApiParam({
+    name:'id',
+    example:1,
+  })
+
+  remove(
+    @Param('id') id:string,
+  ){
+
+    return this.service.remove(
+      Number(id)
+    );
+
   }
+
+
 }

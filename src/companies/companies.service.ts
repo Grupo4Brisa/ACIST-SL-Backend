@@ -8,48 +8,83 @@ import {
 
 import { ConfigService } from '@nestjs/config';
 
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  InjectRepository,
+} from '@nestjs/typeorm';
+
+import {
+  Repository,
+} from 'typeorm';
 
 import * as bcrypt from 'bcrypt';
 
+
 import { Company } from './entities/company.entity';
+
 
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { CompleteCompanyDto } from './dto/complete-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { FilterCompanyDto } from './dto/filter-company.dto';
 
-import { CompanyStatus } from './company-status.enum';
 
-import { ApprovalsService } from '../approvals/approvals.service';
-import { ApprovalAction } from '../approvals/approval-action.enum';
+import {
+  CompanyStatus,
+} from './company-status.enum';
 
-import { LoginTokensService } from '../login-tokens/login-tokens.service';
+
+import {
+  ApprovalsService,
+} from '../approvals/approvals.service';
+
+
+import {
+  ApprovalAction,
+} from '../approvals/approval-action.enum';
+
+
+import {
+  LoginTokensService,
+} from '../login-tokens/login-tokens.service';
+
+
 
 @Injectable()
 export class CompaniesService {
 
-constructor(
 
-  @InjectRepository(Company)
-  private readonly companyRepository:
-    Repository<Company>,
+  constructor(
 
-  private readonly approvalsService:
-    ApprovalsService,
 
-  private readonly configService:
-    ConfigService,
+    @InjectRepository(Company)
 
-  private readonly loginTokensService:
-    LoginTokensService,
+    private readonly companyRepository:
+      Repository<Company>,
 
-) {}
 
-  // =========================
+
+    private readonly approvalsService:
+      ApprovalsService,
+
+
+
+    private readonly configService:
+      ConfigService,
+
+
+
+    private readonly loginTokensService:
+      LoginTokensService,
+
+
+  ) {}
+
+
+
+  // =====================================
   // LISTAR EMPRESAS
-  // =========================
+  // =====================================
+
   async findAll(
     filters: FilterCompanyDto,
   ) {
@@ -79,6 +114,8 @@ constructor(
 
     }
 
+
+
     if(filters.city){
 
       query.andWhere(
@@ -90,6 +127,8 @@ constructor(
       );
 
     }
+
+
 
     if(filters.companySize){
 
@@ -103,6 +142,8 @@ constructor(
 
     }
 
+
+
     if(filters.establishmentType){
 
       query.andWhere(
@@ -114,6 +155,8 @@ constructor(
       );
 
     }
+
+
 
     if(filters.status){
 
@@ -133,9 +176,14 @@ constructor(
 
   }
 
-  // =========================
-  // BUSCAR POR ID
-  // =========================
+
+
+
+
+  // =====================================
+  // BUSCAR EMPRESA POR ID
+  // =====================================
+
   async findOne(
     id:number,
   ){
@@ -149,6 +197,8 @@ constructor(
         },
 
       });
+
+
 
     if(!company){
 
@@ -164,9 +214,14 @@ constructor(
 
   }
 
-  // =========================
+
+
+
+
+  // =====================================
   // LOGIN EMPRESA
-  // =========================
+  // =====================================
+
   async findAuthCompanyByEmail(
     email:string,
   ){
@@ -185,6 +240,8 @@ constructor(
 
     }
 
+
+
     return this.companyRepository.findOne({
 
       where:{
@@ -193,26 +250,21 @@ constructor(
 
 
       select:[
-
         'id',
-
         'companyName',
-
         'email',
-
         'password',
-
         'status',
-
       ],
 
     });
 
-  }
 
-    // =========================
+  }
+    // =====================================
   // CADASTRO INICIAL LANDING
-  // =========================
+  // =====================================
+
   async createLanding(
     companyData: CreateCompanyDto,
   ){
@@ -247,18 +299,26 @@ constructor(
 
     }
 
+
+
+
     let passwordHash:
       string | undefined;
+
+
 
     const landingPassword =
       this.configService.get<boolean>(
         'features.landingPassword',
       );
 
+
+
     if(
       landingPassword &&
       companyData.password
     ){
+
 
       passwordHash =
         await bcrypt.hash(
@@ -266,7 +326,12 @@ constructor(
           10,
         );
 
+
     }
+
+
+
+
 
     const company =
       this.companyRepository.create({
@@ -283,343 +348,899 @@ constructor(
 
       });
 
+
+
+
+
     const saved =
       await this.companyRepository.save(
         company,
       );
+
+
+
+
 
     const {
       password,
       ...companyWithoutPassword
     } = saved;
 
+
+
+
     return companyWithoutPassword;
 
+
   }
- // =========================
-// COMPLETAR CADASTRO
-// =========================
-async complete(
-  id: number,
-  data: CompleteCompanyDto,
-  user: any,
-) {
-
-  
-  const company =
-  await this.findOne(id);
-
-
-console.log('USER RECEBIDO:', user);
-console.log('COMPANY ID:', company.id);
-
-
-if (
-  user.type === 'COMPANY' &&
-  Number(user.id) !== Number(company.id)
-) {
-
-  throw new UnauthorizedException(
-    'Empresa não autorizada a alterar este cadastro.',
-  );
-
-}
 
 
 
 
-  if (
-    company.status !== CompanyStatus.INCOMPLETE
-  ) {
 
-    throw new BadRequestException(
-      'Cadastro já concluído.',
+
+
+
+  // =====================================
+  // COMPLETAR CADASTRO
+  // EMPRESA OU COLABORADOR
+  // =====================================
+
+  async complete(
+
+    id:number,
+
+    data:CompleteCompanyDto,
+
+    user:any,
+
+  ){
+
+
+
+    const company =
+      await this.findOne(id);
+
+
+
+
+
+    /*
+    =====================================
+    EMPRESA:
+    só pode completar o próprio cadastro
+
+    COLABORADOR:
+    acesso controlado pela rota
+
+    TOKEN:
+    usado no primeiro acesso
+
+    =====================================
+    */
+
+
+
+    if(
+
+      user?.type === 'COMPANY' &&
+
+      Number(user.id) !== Number(company.id)
+
+    ){
+
+
+      throw new UnauthorizedException(
+
+        'Empresa não autorizada a alterar este cadastro.',
+
+      );
+
+
+    }
+
+
+
+
+
+
+
+    if(
+
+      company.status === CompanyStatus.ACTIVE ||
+
+      company.status === CompanyStatus.INACTIVE
+
+    ){
+
+
+      throw new BadRequestException(
+
+        'Este cadastro não pode mais ser alterado.',
+
+      );
+
+
+    }
+
+
+
+
+
+
+
+
+    const updated =
+
+      this.companyRepository.merge(
+
+        company,
+
+        {
+
+
+
+          ...data,
+
+
+
+
+
+          foundationDate:
+
+            data.foundationDate
+
+              ? new Date(
+                  data.foundationDate,
+                )
+
+              : company.foundationDate,
+
+
+
+
+
+
+
+          associationDate:
+
+            data.associationDate
+
+              ? new Date(
+                  data.associationDate,
+                )
+
+              : company.associationDate,
+
+
+
+
+
+
+
+          employeesCount:
+
+            data.employeesCount !== undefined
+
+              ? Number(
+                  data.employeesCount,
+                )
+
+              : company.employeesCount,
+
+
+
+
+
+
+
+          status:
+
+            CompanyStatus.PENDING_APPROVAL,
+
+
+        },
+
+      );
+
+
+
+
+
+
+
+    return this.companyRepository.save(
+
+      updated,
+
     );
 
+
   }
 
 
 
-  const updated =
-    this.companyRepository.merge(
+
+
+
+
+
+
+
+
+
+  // =====================================
+  // COMPLETAR CADASTRO POR TOKEN
+  // =====================================
+
+  async completeByToken(
+
+    token:string,
+
+    data:CompleteCompanyDto,
+
+  ){
+
+
+
+    const loginToken =
+
+      await this.loginTokensService.findByToken(
+
+        token,
+
+      );
+
+
+
+
+
+    if(!loginToken){
+
+
+      throw new NotFoundException(
+
+        'Token inválido.',
+
+      );
+
+
+    }
+
+
+
+
+
+
+
+    if(loginToken.used){
+
+
+      throw new BadRequestException(
+
+        'Token já utilizado.',
+
+      );
+
+
+    }
+
+
+
+
+
+
+
+    if(
+
+      loginToken.expiresAt < new Date()
+
+    ){
+
+
+      throw new BadRequestException(
+
+        'Token expirado.',
+
+      );
+
+
+    }
+
+
+
+
+
+
+
+    const company =
+
+      await this.complete(
+
+        loginToken.companyId,
+
+        data,
+
+        {
+
+          type:'TOKEN',
+
+          id:loginToken.companyId,
+
+        },
+
+      );
+
+
+
+
+
+
+
+    await this.loginTokensService.markAsUsed(
+
+      token,
+
+    );
+
+
+
+
+
+
+
+    return company;
+
+
+  }
+    // =====================================
+  // APROVAR EMPRESA
+  // SOMENTE COLABORADOR APROVADOR
+  // =====================================
+
+  async approve(
+
+    companyId:number,
+
+    userId:number,
+
+  ){
+
+
+
+    const company =
+
+      await this.findOne(
+
+        companyId,
+
+      );
+
+
+
+
+
+
+
+    if(
+
+      company.status !==
+
+      CompanyStatus.PENDING_APPROVAL
+
+    ){
+
+
+      throw new BadRequestException(
+
+        'Empresa não está aguardando aprovação.',
+
+      );
+
+
+    }
+
+
+
+
+
+
+
+
+    company.status =
+
+      CompanyStatus.ACTIVE;
+
+
+
+
+
+
+
+
+    await this.companyRepository.save(
+
       company,
-      {
+
+    );
+
+
+
+
+
+
+
+
+
+    await this.approvalsService.createLog({
+
+
+
+      companyId,
+
+
+
+      userId,
+
+
+
+      action:
+
+        ApprovalAction.APPROVED,
+
+
+
+
+
+      observation:
+
+        'Empresa aprovada pelo aprovador.',
+
+
+
+    });
+
+
+
+
+
+
+
+
+
+    const associateLogin =
+
+      this.configService.get<boolean>(
+
+        'features.associateLogin',
+
+      );
+
+
+
+
+
+
+
+
+
+    /*
+    =====================================
+    Caso a empresa não tenha login próprio
+
+    gera token para primeiro acesso
+
+    =====================================
+    */
+
+
+
+    if(!associateLogin){
+
+
+
+      const loginToken =
+
+        await this.loginTokensService.createToken(
+
+          company.id,
+
+        );
+
+
+
+
+
+
+
+      return {
+
+
+        company,
+
+
+
+        completionToken:
+
+          loginToken.token,
+
+
+
+        expiresAt:
+
+          loginToken.expiresAt,
+
+
+      };
+
+
+    }
+
+
+
+
+
+
+
+    return company;
+
+
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // =====================================
+  // REPROVAR EMPRESA
+  // SOMENTE COLABORADOR APROVADOR
+  // =====================================
+
+  async reject(
+
+    companyId:number,
+
+    userId:number,
+
+  ){
+
+
+
+    const company =
+
+      await this.findOne(
+
+        companyId,
+
+      );
+
+
+
+
+
+
+
+    if(
+
+      company.status !==
+
+      CompanyStatus.PENDING_APPROVAL
+
+    ){
+
+
+      throw new BadRequestException(
+
+        'Empresa não está aguardando aprovação.',
+
+      );
+
+
+    }
+
+
+
+
+
+
+
+
+    company.status =
+
+      CompanyStatus.INACTIVE;
+
+
+
+
+
+
+
+
+    await this.companyRepository.save(
+
+      company,
+
+    );
+
+
+
+
+
+
+
+
+
+    await this.approvalsService.createLog({
+
+
+
+      companyId,
+
+
+
+      userId,
+
+
+
+      action:
+
+        ApprovalAction.REJECTED,
+
+
+
+
+
+      observation:
+
+        'Empresa rejeitada pelo aprovador.',
+
+
+
+    });
+
+
+
+
+
+
+
+
+
+    return company;
+
+
+  }
+    // =====================================
+  // ATUALIZAR EMPRESA
+  // EMPRESA OU COLABORADOR
+  // =====================================
+
+  async update(
+
+    id:number,
+
+    data:UpdateCompanyDto,
+
+    user?:any,
+
+  ){
+
+
+
+    const company =
+
+      await this.findOne(
+
+        id,
+
+      );
+
+
+
+
+
+
+
+    /*
+    =====================================
+    REGRA DE ACESSO
+
+    COMPANY:
+    somente altera o próprio cadastro
+
+    COLABORADOR:
+    acesso controlado pela rota
+
+    =====================================
+    */
+
+
+
+    if(
+
+      user?.type === 'COMPANY' &&
+
+      Number(user.id) !== Number(company.id)
+
+    ){
+
+
+      throw new UnauthorizedException(
+
+        'Empresa não autorizada a alterar este cadastro.',
+
+      );
+
+
+    }
+
+
+
+
+
+
+
+
+    /*
+    =====================================
+    CRIPTOGRAFAR NOVA SENHA
+    =====================================
+    */
+
+
+    if(data.password){
+
+
+
+      data = {
+
 
         ...data,
 
 
-        status:
-          CompanyStatus.PENDING_APPROVAL,
+        password:
+
+          await bcrypt.hash(
+
+            data.password,
+
+            10,
+
+          ),
 
 
+      };
 
-        foundationDate:
-          data.foundationDate
-            ? new Date(
-                data.foundationDate,
-              )
-            : undefined,
-
-
-
-        associationDate:
-          data.associationDate
-            ? new Date(
-                data.associationDate,
-              )
-            : undefined,
-
-
-
-        employeesCount:
-          data.employeesCount !== undefined
-            ? Number(
-                data.employeesCount,
-              )
-            : undefined,
-
-      },
-    );
-
-
-
-  return this.companyRepository.save(
-    updated,
-  );
-
-}
-
-  // =========================
-// COMPLETAR CADASTRO POR TOKEN
-// =========================
-async completeByToken(
-  token: string,
-  data: CompleteCompanyDto,
-) {
-
-  const loginToken =
-    await this.loginTokensService.findByToken(
-      token,
-    );
-
-
-  if (!loginToken) {
-
-    throw new NotFoundException(
-      'Token inválido.',
-    );
-
-  }
-
-
-  if (loginToken.used) {
-
-    throw new BadRequestException(
-      'Token já utilizado.',
-    );
-
-  }
-
-
-  if (
-    loginToken.expiresAt <
-    new Date()
-  ) {
-
-    throw new BadRequestException(
-      'Token expirado.',
-    );
-
-  }
-
-
-  const company =
-    await this.complete(
-      loginToken.companyId,
-      data,
-      {
-        type: 'TOKEN',
-        sub: loginToken.companyId,
-      },
-    );
-
-
-  await this.loginTokensService.markAsUsed(
-    token,
-  );
-
-
-  return company;
-
-}
-
-// =========================
-// APROVAR EMPRESA
-// =========================
-async approve(
-  companyId: number,
-  userId: number,
-) {
-  const company = await this.findOne(companyId);
-
-  if (
-    company.status !== CompanyStatus.PENDING_APPROVAL
-  ) {
-    throw new BadRequestException(
-      'Empresa não está aguardando aprovação.',
-    );
-  }
-
-  company.status = CompanyStatus.ACTIVE;
-
-  await this.companyRepository.save(company);
-
-  await this.approvalsService.createLog({
-    companyId,
-    userId,
-    action: ApprovalAction.APPROVED,
-    observation: 'Empresa aprovada pelo aprovador.',
-  });
-
-  // Verifica se a área do associado está habilitada
-  const associateLogin =
-    this.configService.get<boolean>(
-      'features.associateLogin',
-    );
-
-  // Se NÃO existir área do associado,
-  // gera o token para completar o cadastro.
-  if (!associateLogin) {
-    const loginToken =
-      await this.loginTokensService.createToken(
-        company.id,
-      );
-
-    return {
-      company,
-      completionToken: loginToken.token,
-      expiresAt: loginToken.expiresAt,
-    };
-  }
-
-  // Caso exista área do associado,
-  // apenas retorna a empresa aprovada.
-  return company;
-}
-  // =========================
-  // REPROVAR EMPRESA
-  // =========================
-  async reject(
-    companyId:number,
-    userId:number,
-  ){
-
-
-    const company =
-      await this.findOne(companyId);
-
-    if(
-      company.status !==
-      CompanyStatus.PENDING_APPROVAL
-    ){
-
-      throw new BadRequestException(
-        'Empresa não está aguardando aprovação.',
-      );
 
     }
 
-    company.status =
-      CompanyStatus.INACTIVE;
-
-    await this.companyRepository.save(
-      company,
-    );
-
-    await this.approvalsService.createLog({
-
-      companyId,
-
-      userId,
-
-      action:
-        ApprovalAction.REJECTED,
 
 
-      observation:
-        'Empresa rejeitada pelo aprovador.',
-
-    });
-
-    return company;
-
-  }
-
-  // =========================
-// ATUALIZAR EMPRESA
-// =========================
-async update(
-  id: number,
-  data: UpdateCompanyDto,
-  user?: any,
-) {
-
-  const company =
-    await this.findOne(id);
 
 
-  if (data.password) {
-
-    data = {
-
-      ...data,
-
-      password:
-        await bcrypt.hash(
-          data.password,
-          10,
-        ),
-
-    };
-
-  }
 
 
-  const updated =
-    this.companyRepository.merge(
-      company,
-      data,
+
+    /*
+    =====================================
+    STATUS NÃO PODE SER ALTERADO PELO UPDATE
+
+    Apenas os fluxos:
+
+    complete()
+    approve()
+    reject()
+
+    podem alterar status.
+
+    =====================================
+    */
+
+
+    delete data.status;
+
+
+
+
+
+
+
+
+    const updated =
+
+      this.companyRepository.merge(
+
+        company,
+
+        data,
+
+      );
+
+
+
+
+
+
+
+
+    return this.companyRepository.save(
+
+      updated,
+
     );
 
 
-  return this.companyRepository.save(
-    updated,
-  );
+  }
 
-}
 
-  // =========================
+
+
+
+
+
+
+
+
+
+
+  // =====================================
   // REMOVER EMPRESA
-  // =========================
-  async remove(
-    id: number,
-  ) {
+  // SOMENTE ADMIN/APROVADOR
+  // =====================================
 
-    await this.findOne(id);
+
+  async remove(
+
+    id:number,
+
+  ){
+
+
+
+    await this.findOne(
+
+      id,
+
+    );
+
+
+
+
+
 
 
     await this.companyRepository.delete(
+
       id,
+
     );
+
+
+
+
+
 
 
     return {
 
+
       message:
+
         'Empresa removida com sucesso.',
+
 
     };
 
+
   }
+
 
 }
