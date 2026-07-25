@@ -1,0 +1,6 @@
+export enum CompanyStatus {
+  INCOMPLETE = 'INCOMPLETE',
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  PENDING_APPROVAL = 'PENDING_APPROVAL',
+}
