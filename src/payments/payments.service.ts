@@ -26,9 +26,30 @@ export class PaymentsService {
 
   // =========================
   // LISTAR
+  // Enriquece cada pagamento com o nome
+  // da empresa (mesmo padrão usado em
+  // DocumentsService.findAll()).
   // =========================
-  findAll() {
-    return this.paymentRepository.find();
+  async findAll() {
+
+    const payments = await this.paymentRepository.find();
+
+    const companyIds = [
+      ...new Set(payments.map(p => p.companyId)),
+    ];
+
+    const companies =
+      await this.companiesService.findNamesByIds(companyIds);
+
+    const companyMap = new Map(
+      companies.map(c => [c.id, c.companyName]),
+    );
+
+    return payments.map(payment => ({
+      ...payment,
+      companyName: companyMap.get(payment.companyId),
+    }));
+
   }
 
   // =========================
@@ -49,31 +70,36 @@ export class PaymentsService {
   // =========================
   // CREATE
   // =========================
+  // Pagamento pode ser criado em qualquer etapa
+  // do cadastro (INCOMPLETE, PENDING_APPROVAL ou
+  // ACTIVE) — a aprovação do pagamento é
+  // independente da aprovação da empresa pelo
+  // aprovador. Só bloqueia empresa já INACTIVE.
   // =========================
-async create(data: CreatePaymentDto) {
-  const company = await this.companiesService.findOne(
-    data.companyId,
-  );
-
-  if (company.status !== CompanyStatus.ACTIVE) {
-    throw new BadRequestException(
-      'Somente empresas ativas podem receber pagamentos.',
+  async create(data: CreatePaymentDto) {
+    const company = await this.companiesService.findOne(
+      data.companyId,
     );
+
+    if (company.status === CompanyStatus.INACTIVE) {
+      throw new BadRequestException(
+        'Empresa inativa não pode registrar pagamentos.',
+      );
+    }
+
+    if (data.amount <= 0) {
+      throw new BadRequestException(
+        'O valor deve ser maior que zero',
+      );
+    }
+
+    const payment = this.paymentRepository.create({
+      ...data,
+      status: PaymentStatus.PENDING,
+    });
+
+    return this.paymentRepository.save(payment);
   }
-
-  if (data.amount <= 0) {
-    throw new BadRequestException(
-      'O valor deve ser maior que zero',
-    );
-  }
-
-  const payment = this.paymentRepository.create({
-    ...data,
-    status: PaymentStatus.PENDING,
-  });
-
-  return this.paymentRepository.save(payment);
-}
 
   // =========================
   // UPDATE (limitado)

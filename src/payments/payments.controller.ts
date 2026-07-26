@@ -29,12 +29,6 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/user-role.enum';
 
 @ApiTags('Payments')
-@ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(
-  UserRole.COLABORADOR_ADMIN,
-  UserRole.COLABORADOR_APROVADOR,
-)
 @Controller('payments')
 export class PaymentsController {
   constructor(
@@ -43,8 +37,11 @@ export class PaymentsController {
 
   // =========================
   // LISTAR TODOS
+  // SOMENTE COLABORADOR
   // =========================
   @Get()
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Listar todos os pagamentos' })
   findAll() {
@@ -53,8 +50,11 @@ export class PaymentsController {
 
   // =========================
   // BUSCAR POR ID
+  // SOMENTE COLABORADOR
   // =========================
   @Get(':id')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Buscar pagamento por ID' })
   @ApiParam({ name: 'id', example: 1 })
@@ -64,9 +64,12 @@ export class PaymentsController {
 
   // =========================
   // CRIAR PAGAMENTO
+  // PÚBLICO
+  // Chamado pelo associado na tela de
+  // pagamento PIX, antes de ter qualquer
+  // login de colaborador.
   // =========================
   @Post()
-  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Criar pagamento (status PENDING)' })
   @ApiBody({ type: CreatePaymentDto })
   create(@Body() body: CreatePaymentDto) {
@@ -75,8 +78,11 @@ export class PaymentsController {
 
   // =========================
   // ATUALIZAÇÃO GERAL
+  // SOMENTE COLABORADOR
   // =========================
   @Patch(':id')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Atualizar dados do pagamento' })
   @ApiBody({ type: UpdatePaymentDto })
@@ -89,8 +95,11 @@ export class PaymentsController {
 
   // =========================
   // APROVAR PAGAMENTO
+  // SOMENTE APROVADOR
   // =========================
   @Patch(':id/approve')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Aprovar pagamento' })
   approve(@Param('id', ParseIntPipe) id: number) {
@@ -99,8 +108,11 @@ export class PaymentsController {
 
   // =========================
   // MARCAR COMO PAGO
+  // SOMENTE COLABORADOR
   // =========================
   @Patch(':id/pay')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Marcar pagamento como pago' })
   pay(@Param('id', ParseIntPipe) id: number) {
@@ -109,8 +121,11 @@ export class PaymentsController {
 
   // =========================
   // CANCELAR PAGAMENTO
+  // SOMENTE COLABORADOR
   // =========================
   @Patch(':id/cancel')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Cancelar pagamento' })
   cancel(@Param('id', ParseIntPipe) id: number) {
@@ -119,8 +134,11 @@ export class PaymentsController {
 
   // =========================
   // REMOVER
+  // SOMENTE COLABORADOR
   // =========================
   @Delete(':id')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({ summary: 'Remover pagamento' })
   remove(@Param('id', ParseIntPipe) id: number) {
