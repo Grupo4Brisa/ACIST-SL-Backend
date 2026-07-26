@@ -30,7 +30,7 @@ export class Company {
 
   // Senha não aparece nas consultas normais.
   // O login busca explicitamente usando select.
-  @Column({ select: false })
+  @Column({ select: false, nullable: true })
   password!: string;
 
   @Column()

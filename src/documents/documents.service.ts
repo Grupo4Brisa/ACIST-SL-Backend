@@ -27,10 +27,39 @@ export class DocumentsService {
 
   // =========================
   // FIND ALL
+  // Enriquece cada documento com
+  // companyName e establishmentType
+  // (usado nas telas de gestão e
+  // "documentos por empresa")
   // =========================
 
-  findAll() {
-    return this.repo.find();
+  async findAll() {
+
+    const documents = await this.repo.find();
+
+    const companyIds = [
+      ...new Set(documents.map(doc => doc.companyId)),
+    ];
+
+    const companies =
+      await this.companiesService.findNamesByIds(companyIds);
+
+    const companyMap = new Map(
+      companies.map(c => [c.id, c]),
+    );
+
+    return documents.map(doc => {
+
+      const company = companyMap.get(doc.companyId);
+
+      return {
+        ...doc,
+        companyName: company?.companyName,
+        establishmentType: company?.establishmentType,
+      };
+
+    });
+
   }
 
   findByCompany(companyId: number) {

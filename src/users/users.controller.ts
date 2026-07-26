@@ -43,20 +43,21 @@ export class UsersController {
   // SOMENTE ADMIN
   // =========================
   @Get()
-  @ApiBearerAuth('access-token')
-  @UseGuards(
-    JwtAuthGuard,
-    RolesGuard,
-  )
-  @Roles(
-    UserRole.COLABORADOR_ADMIN,
-  )
-  @ApiOperation({
-    summary: 'Listar todos os usuários',
-  })
-  findAll() {
-    return this.usersService.findAll();
-  }
+@ApiBearerAuth('access-token')
+@UseGuards(
+  JwtAuthGuard,
+  RolesGuard,
+)
+@Roles(
+  UserRole.COLABORADOR_ADMIN,
+  UserRole.COLABORADOR_APROVADOR,
+)
+@ApiOperation({
+  summary: 'Listar todos os usuários',
+})
+findAll() {
+  return this.usersService.findAll();
+}
 
   // =========================
   // BUSCAR POR ID
