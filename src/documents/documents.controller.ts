@@ -33,8 +33,6 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/user-role.enum';
 
 @ApiTags('Documents')
-@ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('documents')
 export class DocumentsController {
 
@@ -108,6 +106,18 @@ export class DocumentsController {
 
     return this.service.findAll();
 
+  }
+
+  // =========================
+  // BUSCAR POR EMPRESA
+  // =========================
+
+  @Get('company/:companyId')
+  @ApiOperation({
+    summary: 'Listar documentos por empresa',
+  })
+  findByCompany(@Param('companyId') companyId: string) {
+    return this.service.findByCompany(Number(companyId));
   }
 
   // =========================

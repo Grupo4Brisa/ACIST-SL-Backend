@@ -28,11 +28,15 @@ export class TasksController {
   ) {}
 
   @Get()
-  @ApiOperation({
-    summary: 'Listar todas as tarefas',
-  })
+  @ApiOperation({ summary: 'Listar todas as tarefas' })
   findAll() {
     return this.tasksService.findAll();
+  }
+
+  @Get('company/:companyId')
+  @ApiOperation({ summary: 'Listar tarefas por empresa' })
+  findByCompany(@Param('companyId', ParseIntPipe) companyId: number) {
+    return this.tasksService.findByCompany(companyId);
   }
 
   @Get(':id')

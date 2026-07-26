@@ -11,11 +11,11 @@ export class CompanyContact {
   @Column()
   name!: string;
 
-  @Column()
-  email!: string;
+  @Column({ nullable: true })
+  email?: string;
 
-  @Column()
-  phone!: string;
+  @Column({ nullable: true })
+  phone?: string;
 
   @Column()
   role!: string;

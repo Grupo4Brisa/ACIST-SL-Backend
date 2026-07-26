@@ -5,7 +5,6 @@ import {
 
 import {
   IsEmail,
-  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -13,7 +12,6 @@ import {
   MinLength,
 } from 'class-validator';
 
-import { CompanyOrigin } from '../company-origin.enum';
 
 export class CreateCompanyDto {
 
@@ -88,12 +86,19 @@ export class CreateCompanyDto {
 
 
   @ApiPropertyOptional({
-    enum: CompanyOrigin,
-    example: CompanyOrigin.WEBSITE,
+    example: 'Redes Sociais',
     description: 'Origem da empresa',
   })
   @IsOptional()
-  @IsEnum(CompanyOrigin)
-  origin?: CompanyOrigin;
+  @IsString()
+  origin?: string;
+
+  @ApiPropertyOptional({
+    example: 'João da Silva',
+    description: 'Detalhe da origem (nome do associado indicador ou descrição de outro)',
+  })
+  @IsOptional()
+  @IsString()
+  originDetail?: string;
 
 }

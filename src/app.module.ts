@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
 
 import featuresConfig from './config/features.config';
 
@@ -143,6 +144,20 @@ import { LoginTokensModule } from './login-tokens/login-tokens.module';
 
       }),
 
+      dataSourceFactory: async (options) => {
+        const dataSource = new DataSource(options!);
+        await dataSource.initialize();
+        try {
+          await dataSource.query(
+            "ALTER TABLE companies ALTER COLUMN origin TYPE varchar USING origin::varchar"
+          );
+          await dataSource.query("DROP TYPE IF EXISTS companies_origin_enum CASCADE");
+          await dataSource.query("DROP TYPE IF EXISTS company_origin_enum CASCADE");
+        } catch (_) {
+          // coluna já é varchar, migração não necessária
+        }
+        return dataSource;
+      },
 
     }),
 

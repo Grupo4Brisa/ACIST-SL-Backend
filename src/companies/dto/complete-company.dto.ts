@@ -4,13 +4,10 @@ import { Type } from 'class-transformer';
 
 import {
   IsDateString,
-  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
 } from 'class-validator';
-
-import { CompanyOrigin } from '../company-origin.enum';
 
 export class CompleteCompanyDto {
 
@@ -81,12 +78,11 @@ export class CompleteCompanyDto {
   associationDate?: string;
 
   @ApiPropertyOptional({
-    enum: CompanyOrigin,
-    example: CompanyOrigin.WEBSITE,
+    example: 'Redes Sociais',
     description: 'Origem da empresa',
   })
   @IsOptional()
-  @IsEnum(CompanyOrigin)
-  origin?: CompanyOrigin;
+  @IsString()
+  origin?: string;
 
 }

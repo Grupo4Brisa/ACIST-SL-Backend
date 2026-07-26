@@ -7,7 +7,6 @@ import {
 } from 'typeorm';
 
 import { CompanyStatus } from '../company-status.enum';
-import { CompanyOrigin } from '../company-origin.enum';
 
 @Entity('companies')
 export class Company {
@@ -31,7 +30,7 @@ export class Company {
 
   // Senha não aparece nas consultas normais.
   // O login busca explicitamente usando select.
-  @Column({ select: false })
+  @Column({ select: false, nullable: true })
   password!: string;
 
   @Column()
@@ -40,12 +39,11 @@ export class Company {
   @Column()
   companySize!: string;
 
-  @Column({
-    type: 'enum',
-    enum: CompanyOrigin,
-    nullable: true,
-  })
-  origin?: CompanyOrigin;
+  @Column({ nullable: true })
+  origin?: string;
+
+  @Column({ nullable: true })
+  originDetail?: string;
 
   @Column({ nullable: true })
   website?: string;

@@ -334,7 +334,6 @@ export class CompanySolutionsService {
     companyId:number,
   ){
 
-
     return this.repo.find({
 
       where:{
@@ -342,7 +341,6 @@ export class CompanySolutionsService {
       },
 
     });
-
 
   }
 

@@ -12,11 +12,18 @@ import { CreateTermsAcceptanceDto } from './dto/create-terms-acceptance.dto';
 import { TermsPdfService } from './pdf/terms-pdf.service';
 import { ClicksignService } from './signatures/clicksign.service';
 
+import { InjectRepository as InjectRepo } from '@nestjs/typeorm';
+import { Company } from '../companies/entities/company.entity';
+import { CompanyStatus } from '../companies/company-status.enum';
+
 @Injectable()
 export class TermsAcceptanceService {
   constructor(
     @InjectRepository(TermsAcceptance)
     private readonly termsRepository: Repository<TermsAcceptance>,
+
+    @InjectRepository(Company)
+    private readonly companyRepository: Repository<Company>,
 
     private readonly termsPdfService: TermsPdfService,
 
@@ -73,7 +80,15 @@ export class TermsAcceptanceService {
       termVersion: data.termVersion,
     });
 
-    return this.termsRepository.save(acceptance);
+    await this.termsRepository.save(acceptance);
+
+    // atualiza status da empresa para PENDING_APPROVAL
+    await this.companyRepository.update(
+      data.companyId,
+      { status: CompanyStatus.PENDING_APPROVAL },
+    );
+
+    return acceptance;
   }
 
   // =========================

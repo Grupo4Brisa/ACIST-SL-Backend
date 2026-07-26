@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -145,6 +146,11 @@ export class CompanyContactsController {
       body,
     );
 
+  }
+
+  @Delete(':id')
+  remove(@Param('id', ParseIntPipe) id: number) {
+    return this.companyContactsService.remove(id);
   }
 
 

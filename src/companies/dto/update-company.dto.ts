@@ -14,7 +14,6 @@ import {
 import { Type } from 'class-transformer';
 
 import { CompanyStatus } from '../company-status.enum';
-import { CompanyOrigin } from '../company-origin.enum';
 
 export class UpdateCompanyDto {
   @ApiPropertyOptional()
@@ -58,13 +57,20 @@ export class UpdateCompanyDto {
   companySize?: string;
 
   @ApiPropertyOptional({
-    enum: CompanyOrigin,
-    example: CompanyOrigin.WEBSITE,
+    example: 'Redes Sociais',
     description: 'Origem da empresa',
   })
   @IsOptional()
-  @IsEnum(CompanyOrigin)
-  origin?: CompanyOrigin;
+  @IsString()
+  origin?: string;
+
+  @ApiPropertyOptional({
+    example: 'João da Silva',
+    description: 'Detalhe da origem (nome do associado indicador ou descrição de outro)',
+  })
+  @IsOptional()
+  @IsString()
+  originDetail?: string;
 
   // =========================
   // DADOS COMPLEMENTARES

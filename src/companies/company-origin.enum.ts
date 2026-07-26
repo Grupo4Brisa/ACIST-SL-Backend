@@ -1,10 +1,7 @@
 export enum CompanyOrigin {
-  WEBSITE = 'Website',
-  EVENTO = 'Evento',
-  INDICACAO = 'Indicação',
-  INSTAGRAM = 'Instagram',
-  FACEBOOK = 'Facebook',
-  LINKEDIN = 'LinkedIn',
-  GOOGLE = 'Google',
+  REDES_SOCIAIS = 'Redes Sociais',
+  JORNAL = 'Jornal',
+  SITE = 'Site',
+  INDICACAO = 'Indicação de Associado',
   OUTRO = 'Outro',
 }

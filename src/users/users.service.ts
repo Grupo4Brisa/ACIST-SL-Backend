@@ -2,7 +2,11 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  OnModuleInit,
+  Logger,
 } from '@nestjs/common';
+
+import { ConfigService } from '@nestjs/config';
 
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,13 +17,80 @@ import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
+import { UserRole } from './user-role.enum';
+
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
+
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+
+    private readonly configService: ConfigService,
   ) {}
+
+
+  // =========================
+  // SEED DO ADMIN INICIAL
+  // Executado uma vez quando o módulo
+  // é inicializado (toda subida da API).
+  //
+  // Só cria se NÃO existir nenhum
+  // usuário com role ADMIN — protege
+  // contra duplicar em ambientes que
+  // já têm admin (como o seu local).
+  //
+  // As credenciais vêm de variáveis de
+  // ambiente (nunca hardcoded), então
+  // cada ambiente (local, Railway,
+  // produção) define as suas.
+  // =========================
+  async onModuleInit() {
+
+    const adminCount = await this.userRepository.count({
+      where: {
+        role: UserRole.COLABORADOR_ADMIN,
+      },
+    });
+
+    if (adminCount > 0) {
+      return;
+    }
+
+    const email = this.configService.get<string>('SEED_ADMIN_EMAIL');
+    const password = this.configService.get<string>('SEED_ADMIN_PASSWORD');
+    const name =
+      this.configService.get<string>('SEED_ADMIN_NAME') ?? 'Administrador';
+
+    if (!email || !password) {
+      this.logger.warn(
+        'Nenhum administrador encontrado e SEED_ADMIN_EMAIL/SEED_ADMIN_PASSWORD ' +
+        'não foram configurados. Pulando criação do admin inicial. ' +
+        'Defina essas variáveis de ambiente para criar o primeiro acesso automaticamente.',
+      );
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const admin = this.userRepository.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: UserRole.COLABORADOR_ADMIN,
+      active: true,
+    });
+
+    await this.userRepository.save(admin);
+
+    this.logger.log(
+      `Administrador inicial criado com sucesso: ${email}`,
+    );
+
+  }
 
 
   // =========================

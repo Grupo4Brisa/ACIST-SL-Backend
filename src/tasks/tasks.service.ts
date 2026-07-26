@@ -26,6 +26,10 @@ export class TasksService {
     return this.repository.find();
   }
 
+  findByCompany(companyId: number) {
+    return this.repository.find({ where: { companyId } });
+  }
+
   // =========================
   // BUSCAR
   // =========================

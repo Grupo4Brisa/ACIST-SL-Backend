@@ -5,13 +5,13 @@ export default registerAs(
   () => ({
 
     associateArea:
-      process.env.ASSOCIATE_AREA === 'true',
+      process.env.ASSOCIATE_AREA !== 'false',
 
     associateLogin:
-      process.env.ASSOCIATE_LOGIN === 'true',
+      process.env.ASSOCIATE_LOGIN !== 'false',
 
     associateEvents:
-      process.env.ASSOCIATE_EVENTS === 'true',
+      process.env.ASSOCIATE_EVENTS !== 'false',
 
     landingPassword:
       process.env.LANDING_PASSWORD === 'true',

@@ -14,6 +14,7 @@ import {
 
 import {
   Repository,
+  In,
 } from 'typeorm';
 
 import * as bcrypt from 'bcrypt';
@@ -211,6 +212,49 @@ export class CompaniesService {
 
 
     return company;
+
+  }
+
+
+
+
+
+  // =====================================
+  // BUSCAR NOMES/RAMO EM LOTE
+  // Usado pelo DocumentsService.findAll()
+  // para enriquecer a lista de documentos
+  // com companyName e establishmentType
+  // sem fazer N+1 queries.
+  // =====================================
+
+  async findNamesByIds(
+    ids: number[],
+  ){
+
+
+    if(ids.length === 0){
+
+      return [];
+
+    }
+
+
+
+    return this.companyRepository.find({
+
+      where:{
+        id: In(ids),
+      },
+
+
+      select:[
+        'id',
+        'companyName',
+        'establishmentType',
+      ],
+
+    });
+
 
   }
 

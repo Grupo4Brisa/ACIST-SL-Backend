@@ -350,6 +350,7 @@ export class CompaniesController {
   @Roles(
 
     UserRole.COLABORADOR_APROVADOR,
+    UserRole.COLABORADOR_ADMIN,
 
   )
 
@@ -428,6 +429,7 @@ export class CompaniesController {
   @Roles(
 
     UserRole.COLABORADOR_APROVADOR,
+    UserRole.COLABORADOR_ADMIN,
 
   )
 
@@ -493,16 +495,6 @@ export class CompaniesController {
 
 
   @Patch(':id')
-
-
-  @ApiBearerAuth('access-token')
-
-
-  @UseGuards(
-
-    JwtAuthGuard,
-
-  )
 
 
   @ApiOperation({

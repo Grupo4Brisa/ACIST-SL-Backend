@@ -48,7 +48,7 @@ import { RolesGuard } from './guards/roles.guard';
           || 'secretKey',
 
         signOptions: {
-          expiresIn: '1d',
+          expiresIn: '365d',
         },
 
       }),

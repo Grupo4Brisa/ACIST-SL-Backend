@@ -102,17 +102,20 @@ export class CompanyContactsService {
     contacts:CreateCompanyContactDto[],
   ) {
 
-
     const entities =
       this.companyContactRepository.create(
         contacts,
       );
 
-
     return this.companyContactRepository.save(
       entities,
     );
 
+  }
+
+  async remove(id: number) {
+    await this.companyContactRepository.delete(id);
+    return { message: 'Contato removido com sucesso' };
   }
 
 

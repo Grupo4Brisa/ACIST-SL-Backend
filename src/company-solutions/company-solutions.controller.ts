@@ -150,14 +150,15 @@ export class CompanySolutionsController {
 
 
   @Get()
-  @ApiOperation({
-    summary:
-      'Listar vínculos empresa x solução',
-  })
+  @ApiOperation({ summary: 'Listar vínculos empresa x solução' })
   findAll(){
-
     return this.service.findAll();
+  }
 
+  @Get('company/:companyId')
+  @ApiOperation({ summary: 'Listar soluções por empresa' })
+  findByCompany(@Param('companyId') companyId: string){
+    return this.service.findByCompany(Number(companyId));
   }
 
 
