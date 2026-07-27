@@ -113,7 +113,8 @@ export class CompanyContactsService {
       );
 
     const saved = await this.companyContactRepository.save(entities);
-    if (contacts.length > 0) {
+    const changed = contacts.length > 0 && (contacts[0] as any).changed !== false;
+    if (contacts.length > 0 && changed) {
       const names = contacts.map(c => c.name).join(', ');
       await this.approvalsService.createLog({
         companyId: contacts[0].companyId,
