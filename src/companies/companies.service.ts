@@ -1274,11 +1274,13 @@ export class CompaniesService {
       }
     }
     const diffText = diffs.length > 0 ? diffs.join(' | ') : null;
-    const who = user?.type === 'COMPANY' ? 'Empresa' : 'Colaborador';
+    // Só registra userId se for um colaborador acessando pela área admin (type USER + tem role)
+    const isColaborador = user?.type === 'USER' && user?.role;
+    const who = isColaborador ? 'Colaborador' : 'Empresa';
     if (diffText) {
       await this.approvalsService.createLog({
         companyId: id,
-        userId:    user?.id ?? null,
+        userId:    isColaborador ? (user?.id ?? undefined) : undefined,
         action:    ApprovalAction.COMPLETED,
         observation: `${who} editou: ${diffText}`,
       });

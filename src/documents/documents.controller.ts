@@ -90,7 +90,7 @@ export class DocumentsController {
 
       fileContent: file.buffer,
 
-    }, req.user?.id ?? null);
+    }, req.user ?? null);
 
   }
 

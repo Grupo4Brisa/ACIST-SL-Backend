@@ -102,7 +102,7 @@ export class DocumentsService {
       fileSize: number;
       fileContent: Buffer;
     },
-    userId?: number | null,
+    user?: any,
   ) {
 
     const company =
@@ -124,12 +124,13 @@ export class DocumentsService {
     });
 
     const saved = await this.repo.save(document);
+    const isColaborador = user?.type === 'USER' && user?.role;
     try {
       await this.approvalsService.createLog({
         companyId: data.companyId,
-        userId: userId ?? undefined,
+        userId: isColaborador ? (user?.id ?? undefined) : undefined,
         action: ApprovalAction.COMPLETED,
-        observation: `Documento enviado: ${data.fileName} (${data.documentType})`,
+        observation: `${isColaborador ? 'Colaborador' : 'Empresa'} enviou documento: ${data.fileName} (${data.documentType})`,
       });
     } catch (e) {
       console.error('Erro ao salvar log de documento:', e);
