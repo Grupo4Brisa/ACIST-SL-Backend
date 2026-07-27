@@ -9,6 +9,8 @@ import { Company } from './entities/company.entity';
 import { ApprovalsModule } from '../approvals/approvals.module';
 import { LoginTokensModule } from '../login-tokens/login-tokens.module';
 
+import { MailModule } from '../mail/mail.module';
+
 
 @Module({
   imports: [
@@ -19,6 +21,8 @@ import { LoginTokensModule } from '../login-tokens/login-tokens.module';
     ApprovalsModule,
 
     LoginTokensModule,
+
+    MailModule,
   ],
 
   controllers: [

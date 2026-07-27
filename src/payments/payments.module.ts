@@ -7,10 +7,15 @@ import { CompaniesModule } from '../companies/companies.module';
 
 import { Payment } from './entities/payment.entity';
 
+import { LoginTokensModule } from '../login-tokens/login-tokens.module';
+import { MailModule } from '../mail/mail.module';
+
 @Module({
   imports: [
   TypeOrmModule.forFeature([Payment]),
   CompaniesModule,
+  LoginTokensModule,
+    MailModule,
 ],
   controllers: [PaymentsController],
   providers: [PaymentsService],

@@ -15,6 +15,10 @@ import { PaymentStatus } from './payment-status.enum';
 import { CompaniesService } from '../companies/companies.service';
 import { CompanyStatus } from '../companies/company-status.enum';
 
+import { LoginTokensService } from '../login-tokens/login-tokens.service'; 
+import { MailService } from '../mail/mail.service'; 
+import { ConfigService } from '@nestjs/config';
+
 @Injectable()
 export class PaymentsService {
   constructor(
@@ -22,6 +26,12 @@ export class PaymentsService {
     private readonly paymentRepository: Repository<Payment>,
 
     private readonly companiesService: CompaniesService,
+
+    private readonly loginTokensService: LoginTokensService, 
+    
+    private readonly mailService: MailService,               
+    
+    private readonly configService: ConfigService,           
   ) {}
 
   // =========================
@@ -151,20 +161,32 @@ export class PaymentsService {
   // PAY
   // =========================
   async pay(id: number) {
-    const payment = await this.findOne(id);
+  const payment = await this.findOne(id);
 
-    if (payment.status !== PaymentStatus.APPROVED) {
-      throw new BadRequestException(
-        'Somente pagamentos APPROVED podem ser pagos',
-      );
-    }
-
-    payment.status = PaymentStatus.PAID;
-    payment.paidAt = new Date();
-
-    return this.paymentRepository.save(payment);
+  if (payment.status !== PaymentStatus.APPROVED) {
+    throw new BadRequestException('Somente pagamentos APPROVED podem ser pagos');
   }
 
+  payment.status = PaymentStatus.PAID;
+  payment.paidAt = new Date();
+
+  const saved = await this.paymentRepository.save(payment);
+
+  const company = await this.companiesService.findOne(payment.companyId);
+  const loginToken = await this.loginTokensService.createToken(company.id);
+
+  const frontendUrl = this.configService.get<string>('FRONTEND_URL')
+    || 'http://localhost:5173';
+  const url = `${frontendUrl}/cadastro/complete/${loginToken.token}`;
+
+  await this.mailService.sendRegistrationLinkEmail(
+    company.email,
+    company.companyName,
+    url,
+  );
+
+  return saved;
+}
   // =========================
   // CANCEL
   // =========================

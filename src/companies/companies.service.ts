@@ -28,6 +28,8 @@ import { CompleteCompanyDto } from './dto/complete-company.dto';
 import { UpdateCompanyDto } from './dto/update-company.dto';
 import { FilterCompanyDto } from './dto/filter-company.dto';
 
+import { MailService } from '../mail/mail.service';
+
 
 import {
   CompanyStatus,
@@ -77,6 +79,7 @@ export class CompaniesService {
     private readonly loginTokensService:
       LoginTokensService,
 
+    private readonly mailService: MailService,
 
   ) {}
 
@@ -844,11 +847,10 @@ export class CompaniesService {
 
     });
 
-
-
-
-
-
+    await this.mailService.sendApprovalEmail(
+    company.email,
+    company.companyName,
+  );
 
 
 
