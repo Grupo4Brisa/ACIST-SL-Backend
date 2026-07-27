@@ -24,83 +24,61 @@ export class ApprovalsService {
   ) {}
 
 
-  // =========================
-  // LISTAR HISTÓRICO COMPLETO
-  // =========================
   findAll() {
     return this.approvalRepository.find({
-      order: {
-        createdAt: 'DESC',
-      },
+      order: { createdAt: 'DESC' },
     });
   }
 
-
-  // =========================
-  // BUSCAR POR ID
-  // =========================
   async findOne(id: number) {
-
-    const approval = await this.approvalRepository.findOne({
-      where: {
-        id,
-      },
-    });
-
-
-    if (!approval) {
-      throw new NotFoundException(
-        'Aprovação não encontrada',
-      );
-    }
-
-
+    const approval = await this.approvalRepository.findOne({ where: { id } });
+    if (!approval) throw new NotFoundException('Aprovação não encontrada');
     return approval;
   }
 
-
-  // =========================
-  // LISTAR HISTÓRICO POR EMPRESA
-  // =========================
-  findByCompany(companyId: number) {
-
-    return this.approvalRepository.find({
-      where: {
-        companyId,
-      },
-      order: {
-        createdAt: 'DESC',
-      },
+  async findByCompany(companyId: number) {
+    const approvals = await this.approvalRepository.find({
+      where: { companyId },
+      order: { createdAt: 'ASC' },
     });
 
+    // Resolve nomes de usuários via query
+    const userIds = [...new Set(approvals.map(a => a.userId).filter(Boolean))];
+    let usersMap: Record<number, string> = {};
+
+    if (userIds.length > 0) {
+      const rows = await this.approvalRepository.manager.query(
+        `SELECT id, name FROM users WHERE id = ANY($1)`,
+        [userIds],
+      );
+      rows.forEach((r: any) => { usersMap[r.id] = r.name; });
+    }
+
+    return approvals.map(a => ({
+      id:          a.id,
+      companyId:   a.companyId,
+      userId:      a.userId,
+      userName:    a.userId ? (usersMap[a.userId] ?? `ID ${a.userId}`) : 'Sistema',
+      action:      a.action,
+      observation: a.observation,
+      createdAt:   a.createdAt,
+    }));
   }
 
-
-  // =========================
-  // CRIAR LOG DE APROVAÇÃO
-  // USADO INTERNAMENTE PELO COMPANIES SERVICE
-  // =========================
   async createLog(data: {
     companyId: number;
-    userId: number;
+    userId?: number | null;
     action: ApprovalAction;
     observation?: string;
   }) {
-
     const approval = this.approvalRepository.create({
-      companyId: data.companyId,
-      userId: data.userId,
-      action: data.action,
-      ...(data.observation && {
-        observation: data.observation,
-      }),
-      createdAt: new Date(),
+      companyId:   data.companyId,
+      userId:      data.userId ?? null,
+      action:      data.action,
+      observation: data.observation,
+      createdAt:   new Date(),
     });
-
-
-    return this.approvalRepository.save(
-      approval,
-    );
+    return this.approvalRepository.save(approval);
   }
 
 }

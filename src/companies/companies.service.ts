@@ -413,8 +413,12 @@ export class CompaniesService {
       ...companyWithoutPassword
     } = saved;
 
-
-
+    await this.approvalsService.createLog({
+      companyId: saved.id,
+      userId:    null,
+      action:    ApprovalAction.CREATED,
+      observation: 'Cadastro iniciado pela landing page.',
+    });
 
     return companyWithoutPassword;
 
@@ -596,11 +600,20 @@ export class CompaniesService {
 
 
 
-    return this.companyRepository.save(
+    const savedComplete = await this.companyRepository.save(
 
       updated,
 
     );
+
+    await this.approvalsService.createLog({
+      companyId: id,
+      userId:    user?.id ?? null,
+      action:    ApprovalAction.COMPLETED,
+      observation: 'Cadastro completado/atualizado.',
+    });
+
+    return savedComplete;
 
 
   }
