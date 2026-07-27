@@ -11,6 +11,8 @@ import { CreateTermsAcceptanceDto } from './dto/create-terms-acceptance.dto';
 
 import { TermsPdfService } from './pdf/terms-pdf.service';
 import { ClicksignService } from './signatures/clicksign.service';
+import { ApprovalsService } from '../approvals/approvals.service';
+import { ApprovalAction } from '../approvals/approval-action.enum';
 
 import { InjectRepository as InjectRepo } from '@nestjs/typeorm';
 import { Company } from '../companies/entities/company.entity';
@@ -28,6 +30,8 @@ export class TermsAcceptanceService {
     private readonly termsPdfService: TermsPdfService,
 
     private readonly clicksignService: ClicksignService,
+
+    private readonly approvalsService: ApprovalsService,
   ) {}
 
   // =========================
@@ -81,6 +85,14 @@ export class TermsAcceptanceService {
     });
 
     await this.termsRepository.save(acceptance);
+
+    // log: cadastro finalizado (8 etapas concluídas)
+    await this.approvalsService.createLog({
+      companyId: data.companyId,
+      userId:    undefined,
+      action:    ApprovalAction.FINALIZED,
+      observation: `Cadastro finalizado — Termo de Adesão aceito (versão ${data.termVersion}).`,
+    });
 
     // atualiza status da empresa para PENDING_APPROVAL
     await this.companyRepository.update(

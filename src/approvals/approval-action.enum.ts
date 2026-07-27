@@ -1,6 +1,7 @@
 export enum ApprovalAction {
   CREATED   = 'CREATED',
   COMPLETED = 'COMPLETED',
+  FINALIZED = 'FINALIZED',
   APPROVED  = 'APPROVED',
   REJECTED  = 'REJECTED',
 }

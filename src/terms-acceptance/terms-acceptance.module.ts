@@ -9,9 +9,10 @@ import { Company } from '../companies/entities/company.entity';
 
 import { TermsPdfService } from './pdf/terms-pdf.service';
 import { ClicksignService } from './signatures/clicksign.service';
+import { ApprovalsModule } from '../approvals/approvals.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([TermsAcceptance, Company])],
+  imports: [TypeOrmModule.forFeature([TermsAcceptance, Company]), ApprovalsModule],
 
   controllers: [TermsAcceptanceController],
 
