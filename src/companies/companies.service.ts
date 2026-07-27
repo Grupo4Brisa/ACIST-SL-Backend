@@ -1230,11 +1230,20 @@ export class CompaniesService {
 
 
 
-    return this.companyRepository.save(
+    const savedUpdate = await this.companyRepository.save(
 
       updated,
 
     );
+
+    await this.approvalsService.createLog({
+      companyId: id,
+      userId:    user?.id ?? null,
+      action:    ApprovalAction.COMPLETED,
+      observation: user?.type === 'COMPANY' ? 'Cadastro editado pela própria empresa.' : 'Cadastro editado por colaborador.',
+    });
+
+    return savedUpdate;
 
 
   }
