@@ -104,7 +104,7 @@ export class CompanyContactsService {
 
   async createMany(
     contacts:CreateCompanyContactDto[],
-    userId?: number | null,
+    user?: any,
   ) {
 
     const entities =
@@ -117,9 +117,9 @@ export class CompanyContactsService {
       const names = contacts.map(c => c.name).join(', ');
       await this.approvalsService.createLog({
         companyId: contacts[0].companyId,
-        userId: userId ?? null,
+        userId: (user?.type === 'USER' && user?.role) ? (user?.id ?? undefined) : undefined,
         action: ApprovalAction.COMPLETED,
-        observation: `Contatos atualizados: ${names}`,
+        observation: `${(user?.type === 'USER' && user?.role) ? 'Colaborador' : 'Sistema'} atualizou Contatos: ${names}`,
       });
     }
     return saved;

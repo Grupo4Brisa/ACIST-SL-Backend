@@ -6,6 +6,8 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 
 import {
@@ -15,6 +17,7 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt.guard';
 import { CompanyContactsService } from './company-contacts.service';
 
 import { CreateCompanyContactDto } from './dto/create-company-contact.dto';
@@ -124,6 +127,7 @@ export class CompanyContactsController {
   // =====================================
 
   @Post('bulk')
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
     summary: 'Criar vários contatos da empresa',
   })
@@ -140,10 +144,13 @@ export class CompanyContactsController {
     @Body()
     body: CreateCompanyContactDto[],
 
+    @Req() req: any,
+
   ) {
 
     return this.companyContactsService.createMany(
       body,
+      req.user ?? null,
     );
 
   }

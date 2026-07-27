@@ -30,7 +30,7 @@ export class SocialNetworksService {
   // =========================
   // CRIAR (1 por empresa)
   // =========================
-  async create(data: CreateSocialNetworkDto, userId?: number | null) {
+  async create(data: CreateSocialNetworkDto, user?: any) {
     const exists = await this.repo.findOne({
       where: { companyId: data.companyId },
     });
@@ -46,9 +46,9 @@ export class SocialNetworksService {
     const saved = await this.repo.save(social);
     await this.approvalsService.createLog({
       companyId: data.companyId,
-      userId: userId ?? null,
+      userId: (user?.type === 'USER' && user?.role) ? (user?.id ?? undefined) : undefined,
       action: ApprovalAction.COMPLETED,
-      observation: `Redes Sociais adicionadas: ${[data.facebook && 'Facebook', data.instagram && 'Instagram', data.linkedin && 'LinkedIn', data.other && 'Outras'].filter(Boolean).join(', ') || 'sem dados'}`,
+      observation: `${(user?.type === 'USER' && user?.role) ? 'Colaborador' : 'Sistema'} adicionou Redes Sociais: ${[data.facebook && 'Facebook', data.instagram && 'Instagram', data.linkedin && 'LinkedIn', data.other && 'Outras'].filter(Boolean).join(', ') || 'sem dados'}`,
     });
     return saved;
   }
@@ -73,7 +73,7 @@ export class SocialNetworksService {
   // =========================
   // UPDATE
   // =========================
-  async update(companyId: number, data: UpdateSocialNetworkDto, userId?: number | null) {
+  async update(companyId: number, data: UpdateSocialNetworkDto, user?: any) {
     const social = await this.findByCompany(companyId);
 
     // Captura valores ANTES do merge
@@ -97,9 +97,9 @@ export class SocialNetworksService {
       try {
         await this.approvalsService.createLog({
           companyId,
-          userId:      userId ?? undefined,
+          userId:      (user?.type === 'USER' && user?.role) ? (user?.id ?? undefined) : undefined,
           action:      ApprovalAction.COMPLETED,
-          observation: `Redes Sociais editadas: ${fieldsChanged.join(' | ')}`,
+          observation: `${(user?.type === 'USER' && user?.role) ? 'Colaborador' : 'Sistema'} editou Redes Sociais: ${fieldsChanged.join(' | ')}`,
         });
       } catch (e) {
         console.error('Erro ao salvar log de redes sociais:', e);
