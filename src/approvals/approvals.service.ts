@@ -73,7 +73,7 @@ export class ApprovalsService {
   }) {
     const approval = this.approvalRepository.create({
       companyId:   data.companyId,
-      userId:      data.userId ?? null,
+      userId:      data.userId ?? undefined,
       action:      data.action,
       observation: data.observation,
       createdAt:   new Date(),

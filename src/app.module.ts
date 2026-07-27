@@ -138,7 +138,7 @@ import { LoginTokensModule } from './login-tokens/login-tokens.module';
 
 
 
-        synchronize: true,
+        synchronize: false,
 
 
 
@@ -153,9 +153,20 @@ import { LoginTokensModule } from './login-tokens/login-tokens.module';
           );
           await dataSource.query("DROP TYPE IF EXISTS companies_origin_enum CASCADE");
           await dataSource.query("DROP TYPE IF EXISTS company_origin_enum CASCADE");
-        } catch (_) {
-          // coluna já é varchar, migração não necessária
-        }
+        } catch (_) {}
+        try {
+          await dataSource.query(
+            "ALTER TABLE approvals ALTER COLUMN action TYPE varchar USING action::varchar"
+          );
+          await dataSource.query("DROP TYPE IF EXISTS approvals_action_enum CASCADE");
+          await dataSource.query("DROP TYPE IF EXISTS approval_action_enum CASCADE");
+        } catch (_) {}
+        try {
+          await dataSource.query(
+            "ALTER TABLE approvals ALTER COLUMN \"userId\" DROP NOT NULL"
+          );
+        } catch (_) {}
+        await dataSource.synchronize();
         return dataSource;
       },
 

@@ -12,12 +12,12 @@ export class Approval {
   @Column()
   companyId!: number;
 
-  @ApiProperty()
-  @Column()
-  userId!: number;
+  @ApiProperty({ required: false })
+  @Column({ nullable: true })
+  userId?: number;
 
   @ApiProperty({ enum: ApprovalAction })
-  @Column({ type: 'enum', enum: ApprovalAction })
+  @Column({ type: 'varchar' })
   action!: ApprovalAction;
 
   @ApiProperty({ required: false })
