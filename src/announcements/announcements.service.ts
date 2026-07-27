@@ -5,12 +5,14 @@ import { Repository } from 'typeorm';
 import { Announcement } from './entities/announcement.entity';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AnnouncementsService {
   constructor(
     @InjectRepository(Announcement)
     private readonly announcementsRepository: Repository<Announcement>,
+    private readonly mailService: MailService,
   ) {}
 
   create(createAnnouncementDto: CreateAnnouncementDto) {
@@ -26,35 +28,55 @@ export class AnnouncementsService {
     });
   }
 
-  async findOne(id: number) {
-    const announcement = await this.announcementsRepository.findOne({
-      where: { id },
+  findAllAdmin() {
+    return this.announcementsRepository.find({
+      order: { createdAt: 'DESC' },
     });
+  }
 
-    if (!announcement) {
-      throw new NotFoundException('Announcement não encontrado');
-    }
-
+  async findOne(id: number) {
+    const announcement = await this.announcementsRepository.findOne({ where: { id } });
+    if (!announcement) throw new NotFoundException('Announcement não encontrado');
     return announcement;
   }
 
   async update(id: number, dto: UpdateAnnouncementDto) {
     const announcement = await this.findOne(id);
-
     Object.assign(announcement, dto);
-
     return this.announcementsRepository.save(announcement);
   }
 
   async remove(id: number) {
     await this.findOne(id);
+    await this.announcementsRepository.update(id, { active: false });
+    return { message: 'Aviso removido com sucesso' };
+  }
 
-    await this.announcementsRepository.update(id, {
-      active: false,
-    });
+  async sendToEmails(id: number): Promise<{ sent: number; errors: number }> {
+    const announcement = await this.findOne(id);
 
-    return {
-      message: 'Aviso removido com sucesso',
-    };
+    // Buscar todos os emails de empresas cadastradas
+    const companies = await this.announcementsRepository.manager.query(
+      `SELECT email, "companyName" FROM companies WHERE email IS NOT NULL AND status != 'INACTIVE'`
+    );
+
+    let sent = 0;
+    let errors = 0;
+
+    for (const company of companies) {
+      try {
+        await this.mailService.sendAnnouncementEmail(
+          company.email,
+          company.companyName,
+          announcement.title,
+          announcement.content,
+        );
+        sent++;
+      } catch {
+        errors++;
+      }
+    }
+
+    return { sent, errors };
   }
 }
