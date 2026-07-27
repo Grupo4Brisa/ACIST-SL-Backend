@@ -27,7 +27,9 @@ export class DashboardService {
 
   private formatHours(ms: number | null): string {
     if (!ms || ms <= 0) return '-';
-    const hours = Math.round(ms / 1000 / 60 / 60);
+    const minutes = Math.round(ms / 1000 / 60);
+    if (minutes < 60) return minutes + 'min';
+    const hours = Math.round(minutes / 60);
     if (hours < 24) return hours + 'h';
     return Math.round(hours / 24) + 'd';
   }
