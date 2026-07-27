@@ -1236,11 +1236,46 @@ export class CompaniesService {
 
     );
 
+    // Captura diferenças entre estado anterior e novo
+    const fieldLabels: Record<string, string> = {
+          "companyName": "Nome Fantasia",
+          "corporateName": "Razão Social",
+          "cnpjcpf": "CNPJ/CPF",
+          "email": "Email",
+          "phone": "Telefone",
+          "companySize": "Porte",
+          "stateRegistration": "Inscrição Estadual",
+          "address": "Endereço",
+          "neighborhood": "Bairro",
+          "city": "Cidade",
+          "state": "Estado",
+          "zipCode": "CEP",
+          "website": "Site",
+          "establishmentType": "Tipo de Estabelecimento",
+          "headquartersType": "Tipo de Sede",
+          "employeesCount": "Nº de Funcionários",
+          "foundationDate": "Data de Fundação",
+          "origin": "Como Conheceu",
+          "originDetail": "Detalhe da Origem",
+          "eventPresentation": "Apresentação para Eventos"
+    };
+    const diffs: string[] = [];
+    const trackedFields = Object.keys(fieldLabels);
+    for (const field of trackedFields) {
+      const oldVal = (company as any)[field];
+      const newVal = (data as any)[field];
+      if (newVal !== undefined && String(newVal ?? '') !== String(oldVal ?? '')) {
+        const label = fieldLabels[field] || field;
+        diffs.push(`${label}: "${oldVal ?? '-'}" → "${newVal ?? '-'}"`);
+      }
+    }
+    const diffText = diffs.length > 0 ? diffs.join(' | ') : 'Sem alterações detectadas.';
+    const who = user?.type === 'COMPANY' ? 'Empresa' : 'Colaborador';
     await this.approvalsService.createLog({
       companyId: id,
       userId:    user?.id ?? null,
       action:    ApprovalAction.COMPLETED,
-      observation: user?.type === 'COMPANY' ? 'Cadastro editado pela própria empresa.' : 'Cadastro editado por colaborador.',
+      observation: `${who} editou: ${diffText}`,
     });
 
     return savedUpdate;
