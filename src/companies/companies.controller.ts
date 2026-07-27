@@ -32,6 +32,7 @@ import { FilterCompanyDto } from './dto/filter-company.dto';
 
 
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt.guard';
 
 import { RolesGuard } from '../auth/guards/roles.guard';
 
@@ -512,6 +513,8 @@ export class CompaniesController {
     example:1,
 
   })
+
+  @UseGuards(OptionalJwtAuthGuard)
 
 
   @ApiBody({
