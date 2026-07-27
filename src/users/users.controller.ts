@@ -122,7 +122,7 @@ findAll() {
     RolesGuard,
   )
   @Roles(
-    UserRole.COLABORADOR_ADMIN,
+    UserRole.COLABORADOR_APROVADOR,
   )
   @ApiOperation({
     summary: 'Atualizar usuário',
@@ -154,7 +154,7 @@ findAll() {
     RolesGuard,
   )
   @Roles(
-    UserRole.COLABORADOR_ADMIN,
+    UserRole.COLABORADOR_APROVADOR,
   )
   @ApiOperation({
     summary: 'Remover usuário',
