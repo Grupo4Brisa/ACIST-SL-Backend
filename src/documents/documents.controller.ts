@@ -29,6 +29,7 @@ import { CreateDocumentDto } from './dto/create-document.dto';
 import { UpdateDocumentDto } from './dto/update-document.dto';
 
 import { JwtAuthGuard } from '../auth/jwt.guard';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/user-role.enum';
@@ -46,6 +47,7 @@ export class DocumentsController {
   // =========================
 
   @Post()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
     summary: 'Upload de documento',
   })
@@ -88,7 +90,7 @@ export class DocumentsController {
 
       fileContent: file.buffer,
 
-    });
+    }, req.user?.id ?? null);
 
   }
 
