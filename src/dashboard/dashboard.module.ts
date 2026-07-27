@@ -8,6 +8,7 @@ import { Company } from '../companies/entities/company.entity';
 import { Event } from '../events/entities/event.entity';
 import { Announcement } from '../announcements/entities/announcement.entity';
 import { Document } from '../documents/entities/document.entity';
+import { Approval } from '../approvals/entities/approval.entity';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { Document } from '../documents/entities/document.entity';
       Event,
       Announcement,
       Document,
+      Approval,
     ]),
   ],
   controllers: [DashboardController],
