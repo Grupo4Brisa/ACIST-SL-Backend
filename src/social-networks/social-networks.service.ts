@@ -76,21 +76,34 @@ export class SocialNetworksService {
   async update(companyId: number, data: UpdateSocialNetworkDto, userId?: number | null) {
     const social = await this.findByCompany(companyId);
 
+    // Captura valores ANTES do merge
+    const before = {
+      facebook:  social.facebook,
+      instagram: social.instagram,
+      linkedin:  social.linkedin,
+      other:     social.other,
+    };
+
     const updated = this.repo.merge(social, data);
 
     const fieldsChanged: string[] = [];
-    if (data.facebook !== undefined && data.facebook !== social.facebook) fieldsChanged.push(`Facebook: "${social.facebook ?? '-'}" → "${data.facebook ?? '-'}"`);
-    if (data.instagram !== undefined && data.instagram !== social.instagram) fieldsChanged.push(`Instagram: "${social.instagram ?? '-'}" → "${data.instagram ?? '-'}"`);
-    if (data.linkedin !== undefined && data.linkedin !== social.linkedin) fieldsChanged.push(`LinkedIn: "${social.linkedin ?? '-'}" → "${data.linkedin ?? '-'}"`);
-    if (data.other !== undefined && data.other !== social.other) fieldsChanged.push(`Outras: "${social.other ?? '-'}" → "${data.other ?? '-'}"`);
+    if (data.facebook  !== undefined && data.facebook  !== before.facebook)  fieldsChanged.push(`Facebook: "${before.facebook  ?? '-'}" → "${data.facebook  ?? '-'}"`);
+    if (data.instagram !== undefined && data.instagram !== before.instagram) fieldsChanged.push(`Instagram: "${before.instagram ?? '-'}" → "${data.instagram ?? '-'}"`);
+    if (data.linkedin  !== undefined && data.linkedin  !== before.linkedin)  fieldsChanged.push(`LinkedIn: "${before.linkedin  ?? '-'}" → "${data.linkedin  ?? '-'}"`);
+    if (data.other     !== undefined && data.other     !== before.other)     fieldsChanged.push(`Outras: "${before.other ?? '-'}" → "${data.other ?? '-'}"`);
+
     const savedUpdate = await this.repo.save(updated);
     if (fieldsChanged.length > 0) {
-      await this.approvalsService.createLog({
-        companyId,
-        userId: userId ?? null,
-        action: ApprovalAction.COMPLETED,
-        observation: `Redes Sociais editadas: ${fieldsChanged.join(' | ')}`,
-      });
+      try {
+        await this.approvalsService.createLog({
+          companyId,
+          userId:      userId ?? undefined,
+          action:      ApprovalAction.COMPLETED,
+          observation: `Redes Sociais editadas: ${fieldsChanged.join(' | ')}`,
+        });
+      } catch (e) {
+        console.error('Erro ao salvar log de redes sociais:', e);
+      }
     }
     return savedUpdate;
   }
