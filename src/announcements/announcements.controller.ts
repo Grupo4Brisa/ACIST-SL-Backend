@@ -53,11 +53,6 @@ export class AnnouncementsController {
     return this.announcementsService.update(id, updateAnnouncementDto);
   }
 
-  @Post(':id/send-email')
-  @ApiOperation({ summary: 'Enviar comunicado por email para todas as empresas' })
-  sendEmail(@Param('id', ParseIntPipe) id: number) {
-    return this.announcementsService.sendToEmails(id);
-  }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Desativar announcement (soft delete)' })

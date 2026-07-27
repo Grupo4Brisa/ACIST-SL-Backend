@@ -5,14 +5,12 @@ import { Repository } from 'typeorm';
 import { Announcement } from './entities/announcement.entity';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
-import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AnnouncementsService {
   constructor(
     @InjectRepository(Announcement)
     private readonly announcementsRepository: Repository<Announcement>,
-    private readonly mailService: MailService,
   ) {}
 
   create(createAnnouncementDto: CreateAnnouncementDto) {
@@ -52,31 +50,4 @@ export class AnnouncementsService {
     return { message: 'Aviso removido com sucesso' };
   }
 
-  async sendToEmails(id: number): Promise<{ sent: number; errors: number }> {
-    const announcement = await this.findOne(id);
-
-    // Buscar todos os emails de empresas cadastradas
-    const companies = await this.announcementsRepository.manager.query(
-      `SELECT email, "companyName" FROM companies WHERE email IS NOT NULL AND status != 'INACTIVE'`
-    );
-
-    let sent = 0;
-    let errors = 0;
-
-    for (const company of companies) {
-      try {
-        await this.mailService.sendAnnouncementEmail(
-          company.email,
-          company.companyName,
-          announcement.title,
-          announcement.content,
-        );
-        sent++;
-      } catch {
-        errors++;
-      }
-    }
-
-    return { sent, errors };
-  }
 }
