@@ -1213,6 +1213,11 @@ export class CompaniesService {
 
 
 
+    // Captura valores ANTES do merge
+    const snapshot: Record<string, any> = {};
+    const trackedFieldsList = ['companyName','corporateName','cnpjcpf','email','phone','companySize','stateRegistration','address','neighborhood','city','state','zipCode','website','establishmentType','headquartersType','employeesCount','foundationDate','origin','originDetail','eventPresentation'];
+    for (const f of trackedFieldsList) snapshot[f] = (company as any)[f];
+
     const updated =
 
       this.companyRepository.merge(
@@ -1260,9 +1265,8 @@ export class CompaniesService {
           "eventPresentation": "Apresentação para Eventos"
     };
     const diffs: string[] = [];
-    const trackedFields = Object.keys(fieldLabels);
-    for (const field of trackedFields) {
-      const oldVal = (company as any)[field];
+    for (const field of trackedFieldsList) {
+      const oldVal = snapshot[field];
       const newVal = (data as any)[field];
       if (newVal !== undefined && String(newVal ?? '') !== String(oldVal ?? '')) {
         const label = fieldLabels[field] || field;
