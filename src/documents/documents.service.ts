@@ -25,6 +25,8 @@ export class DocumentsService {
     private readonly repo: Repository<Document>,
 
     private readonly companiesService: CompaniesService,
+
+    private readonly approvalsService: ApprovalsService,
   ) {}
 
   // =========================
@@ -100,6 +102,7 @@ export class DocumentsService {
       fileSize: number;
       fileContent: Buffer;
     },
+    userId?: number | null,
   ) {
 
     const company =
@@ -120,7 +123,18 @@ export class DocumentsService {
       status: DocumentStatus.PENDING,
     });
 
-    return this.repo.save(document);
+    const saved = await this.repo.save(document);
+    try {
+      await this.approvalsService.createLog({
+        companyId: data.companyId,
+        userId: userId ?? undefined,
+        action: ApprovalAction.COMPLETED,
+        observation: `Documento enviado: ${data.fileName} (${data.documentType})`,
+      });
+    } catch (e) {
+      console.error('Erro ao salvar log de documento:', e);
+    }
+    return saved;
   }
 
   // =========================
