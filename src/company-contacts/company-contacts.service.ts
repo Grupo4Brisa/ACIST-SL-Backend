@@ -8,6 +8,8 @@ import { Repository } from 'typeorm';
 import { CompanyContact } from './entities/company-contact.entity';
 
 import { CreateCompanyContactDto } from './dto/create-company-contact.dto';
+import { ApprovalsService } from '../approvals/approvals.service';
+import { ApprovalAction } from '../approvals/approval-action.enum';
 
 
 
@@ -21,6 +23,8 @@ export class CompanyContactsService {
 
     private readonly companyContactRepository:
       Repository<CompanyContact>,
+
+    private readonly approvalsService: ApprovalsService,
 
   ) {}
 
@@ -100,6 +104,7 @@ export class CompanyContactsService {
 
   async createMany(
     contacts:CreateCompanyContactDto[],
+    userId?: number | null,
   ) {
 
     const entities =
@@ -107,9 +112,17 @@ export class CompanyContactsService {
         contacts,
       );
 
-    return this.companyContactRepository.save(
-      entities,
-    );
+    const saved = await this.companyContactRepository.save(entities);
+    if (contacts.length > 0) {
+      const names = contacts.map(c => c.name).join(', ');
+      await this.approvalsService.createLog({
+        companyId: contacts[0].companyId,
+        userId: userId ?? null,
+        action: ApprovalAction.COMPLETED,
+        observation: `Contatos atualizados: ${names}`,
+      });
+    }
+    return saved;
 
   }
 

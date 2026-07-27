@@ -14,6 +14,8 @@ import { UpdateDocumentDto } from './dto/update-document.dto';
 import { DocumentStatus } from './document-status.enum';
 
 import { CompaniesService } from '../companies/companies.service';
+import { ApprovalsService } from '../approvals/approvals.service';
+import { ApprovalAction } from '../approvals/approval-action.enum';
 import { CompanyStatus } from '../companies/company-status.enum';
 
 @Injectable()

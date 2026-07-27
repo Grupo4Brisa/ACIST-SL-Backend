@@ -1,5 +1,6 @@
 import {
   Controller,
+  Req,
   Get,
   Post,
   Body,
@@ -70,6 +71,7 @@ export class DocumentsController {
   create(
     @Body() body: CreateDocumentDto,
     @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
   ) {
 
     return this.service.create({
