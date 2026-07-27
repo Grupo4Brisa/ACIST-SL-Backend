@@ -1269,14 +1269,16 @@ export class CompaniesService {
         diffs.push(`${label}: "${oldVal ?? '-'}" → "${newVal ?? '-'}"`);
       }
     }
-    const diffText = diffs.length > 0 ? diffs.join(' | ') : 'Sem alterações detectadas.';
+    const diffText = diffs.length > 0 ? diffs.join(' | ') : null;
     const who = user?.type === 'COMPANY' ? 'Empresa' : 'Colaborador';
-    await this.approvalsService.createLog({
-      companyId: id,
-      userId:    user?.id ?? null,
-      action:    ApprovalAction.COMPLETED,
-      observation: `${who} editou: ${diffText}`,
-    });
+    if (diffText) {
+      await this.approvalsService.createLog({
+        companyId: id,
+        userId:    user?.id ?? null,
+        action:    ApprovalAction.COMPLETED,
+        observation: `${who} editou: ${diffText}`,
+      });
+    }
 
     return savedUpdate;
 
