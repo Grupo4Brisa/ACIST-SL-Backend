@@ -5,6 +5,9 @@ import { DataSource } from 'typeorm';
 
 import featuresConfig from './config/features.config';
 
+import { DevService } from './data/services/dev.service';
+import { ProdService } from './data/services/prod.service';
+
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { CompaniesModule } from './companies/companies.module';
@@ -26,6 +29,10 @@ import { AnnouncementsModule } from './announcements/announcements.module';
 
 import { DashboardModule } from './dashboard/dashboard.module';
 import { LoginTokensModule } from './login-tokens/login-tokens.module';
+
+
+
+const isProduction = process.env.NODE_ENV === 'production';
 
 
 
@@ -55,119 +62,64 @@ import { LoginTokensModule } from './login-tokens/login-tokens.module';
 
     // =========================
     // BANCO DE DADOS
+    //
+    // NODE_ENV=production -> ProdService (synchronize: false)
+    // qualquer outro valor -> DevService (synchronize: true)
     // =========================
 
     TypeOrmModule.forRootAsync({
 
-      inject: [
-        ConfigService,
-      ],
-
-
-      useFactory: (
-
-        config: ConfigService,
-
-      ) => ({
-
-
-        type: 'postgres',
-
-
-
-        host:
-
-          config.get<string>(
-
-            'DATABASE_HOST',
-
-          ),
-
-
-
-        port:
-
-          Number(
-
-            config.get<string>(
-
-              'DATABASE_PORT',
-
-            ),
-
-          ),
-
-
-
-
-        username:
-
-          config.get<string>(
-
-            'DATABASE_USER',
-
-          ),
-
-
-
-
-        password:
-
-          config.get<string>(
-
-            'DATABASE_PASSWORD',
-
-          ),
-
-
-
-
-        database:
-
-          config.get<string>(
-
-            'DATABASE_NAME',
-
-          ),
-
-
-
-
-
-        autoLoadEntities: true,
-
-
-
-        synchronize: false,
-
-
-
-      }),
+      useClass: isProduction ? ProdService : DevService,
 
       dataSourceFactory: async (options) => {
+
         const dataSource = new DataSource(options!);
+
         await dataSource.initialize();
+
+
         try {
           await dataSource.query(
             "ALTER TABLE companies ALTER COLUMN origin TYPE varchar USING origin::varchar"
           );
           await dataSource.query("DROP TYPE IF EXISTS companies_origin_enum CASCADE");
           await dataSource.query("DROP TYPE IF EXISTS company_origin_enum CASCADE");
-        } catch (_) {}
+        } catch (_) {
+          // coluna já é varchar, ajuste não necessário
+        }
+
+
         try {
           await dataSource.query(
             "ALTER TABLE approvals ALTER COLUMN action TYPE varchar USING action::varchar"
           );
           await dataSource.query("DROP TYPE IF EXISTS approvals_action_enum CASCADE");
           await dataSource.query("DROP TYPE IF EXISTS approval_action_enum CASCADE");
-        } catch (_) {}
+        } catch (_) {
+          // coluna já é varchar, ajuste não necessário
+        }
+
+
         try {
           await dataSource.query(
             "ALTER TABLE approvals ALTER COLUMN \"userId\" DROP NOT NULL"
           );
-        } catch (_) {}
-        await dataSource.synchronize();
+        } catch (_) {
+          // coluna já aceita nulo, ajuste não necessário
+        }
+
+
+        // Só sincroniza o schema automaticamente fora de
+        // produção. Essa chamada SOBRESCREVIA o synchronize:
+        // false definido acima — por isso, em produção, ela
+        // precisa ficar condicionada ao mesmo NODE_ENV.
+        if (!isProduction) {
+          await dataSource.synchronize();
+        }
+
+
         return dataSource;
+
       },
 
     }),
