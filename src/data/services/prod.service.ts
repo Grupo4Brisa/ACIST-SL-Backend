@@ -27,14 +27,23 @@ export class ProdService implements TypeOrmOptionsFactory {
 
       autoLoadEntities: true,
 
-      // Em produção NUNCA usar synchronize: true — o schema
-      // já foi criado pelo synchronize do ambiente de dev/local.
-      // Se precisar alterar tabelas depois, use migrations.
-      synchronize: false,
+      // Em produção, normalmente NUNCA usar synchronize: true —
+      // o ideal é usar migrations. Mas em um banco novo/vazio
+      // (primeiro deploy, ainda sem migrations configuradas),
+      // não existe outra forma de criar o schema inicial.
+      //
+      // Por isso isso é controlado por env var: defina
+      // DATABASE_SYNC=true no Render SÓ para o primeiro deploy
+      // (ou sempre que precisar recriar uma tabela nova), depois
+      // REMOVA essa variável (ou coloque =false) e faça outro
+      // deploy. Deixá-la true permanentemente é arriscado, porque
+      // o synchronize pode alterar/apagar colunas sem aviso.
+      synchronize:
+        this.configService.get<string>('DATABASE_SYNC') === 'true',
 
-      // A conexão interna do Render (mesma região) não exige
-      // SSL. Se um dia você conectar de fora do Render (ex: um
-      // Postgres externo), ative isso via variável de ambiente.
+      // A conexão externa do Render exige SSL. Se um dia você
+      // conectar via rede interna (mesma região), pode desativar
+      // via variável de ambiente.
       ssl:
         this.configService.get<string>('DATABASE_SSL') === 'true'
           ? { rejectUnauthorized: false }
