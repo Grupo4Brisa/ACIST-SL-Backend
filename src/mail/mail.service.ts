@@ -9,6 +9,11 @@ export class MailService {
 
   constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
+      connectionTimeout: 10000,
+      greetingTimeout: 10000,
+      socketTimeout: 10000,
+      debug: true,
+      logger: true,
       service: 'gmail',
       auth: {
         user: this.configService.get<string>('GMAIL_USER'),
@@ -20,6 +25,10 @@ export class MailService {
   }
 
   async sendApprovalEmail(to: string, companyName: string) {
+    console.log('Verifying SMTP...');
+    await this.transporter.verify();
+    console.log('SMTP verified');
+    
     await this.transporter.sendMail({
       from: this.from,
       to,
@@ -32,7 +41,11 @@ export class MailService {
     });
   }
 
-  async sendRegistrationLinkEmail(to: string, companyName: string, url: string) {
+  async sendRegistrationLinkEmail(
+    to: string,
+    companyName: string,
+    url: string,
+  ) {
     await this.transporter.sendMail({
       from: this.from,
       to,
