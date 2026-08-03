@@ -8,11 +8,7 @@ import {
   Delete,
 } from '@nestjs/common';
 
-import {
-  ApiTags,
-  ApiOperation,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 import { EventRegistrationsService } from './event-registrations.service';
 import { CreateEventRegistrationDto } from './dto/create-event-registration.dto';
@@ -44,10 +40,7 @@ export class EventRegistrationsController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar inscrição' })
-  update(
-    @Param('id') id: string,
-    @Body() body: UpdateEventRegistrationDto,
-  ) {
+  update(@Param('id') id: string, @Body() body: UpdateEventRegistrationDto) {
     return this.service.update(+id, body);
   }
 

@@ -12,11 +12,11 @@ import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
-  TypeOrmModule.forFeature([Payment]),
-  CompaniesModule,
-  LoginTokensModule,
+    TypeOrmModule.forFeature([Payment]),
+    CompaniesModule,
+    LoginTokensModule,
     MailModule,
-],
+  ],
   controllers: [PaymentsController],
   providers: [PaymentsService],
   exports: [PaymentsService],

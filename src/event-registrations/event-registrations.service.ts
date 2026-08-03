@@ -49,9 +49,7 @@ export class EventRegistrationsService {
     });
 
     if (exists) {
-      throw new ConflictException(
-        'Empresa já está registrada neste evento',
-      );
+      throw new ConflictException('Empresa já está registrada neste evento');
     }
 
     const registration = this.repo.create({
@@ -65,10 +63,7 @@ export class EventRegistrationsService {
   // =========================
   // UPDATE
   // =========================
-  async update(
-    id: number,
-    data: UpdateEventRegistrationDto,
-  ) {
+  async update(id: number, data: UpdateEventRegistrationDto) {
     const reg = await this.findOne(id);
 
     const updated = this.repo.merge(reg, data);

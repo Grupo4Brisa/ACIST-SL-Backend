@@ -4,55 +4,22 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 
+import { InjectRepository } from '@nestjs/typeorm';
 
-import {
-  InjectRepository,
-} from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
+import { CompanySolution } from './entities/company-solution.entity';
 
-import {
-  Repository,
-} from 'typeorm';
+import { CreateCompanySolutionDto } from './dto/create-company-solution.dto';
 
-
-import {
-  CompanySolution,
-} from './entities/company-solution.entity';
-
-
-import {
-  CreateCompanySolutionDto,
-} from './dto/create-company-solution.dto';
-
-
-import {
-  UpdateCompanySolutionDto,
-} from './dto/update-company-solution.dto';
-
-
-
-
+import { UpdateCompanySolutionDto } from './dto/update-company-solution.dto';
 
 @Injectable()
 export class CompanySolutionsService {
-
-
   constructor(
-
     @InjectRepository(CompanySolution)
-
-    private readonly repo:
-      Repository<CompanySolution>,
-
+    private readonly repo: Repository<CompanySolution>,
   ) {}
-
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -60,63 +27,25 @@ export class CompanySolutionsService {
   ==================================================
   */
 
+  async create(data: CreateCompanySolutionDto) {
+    const exists = await this.repo.findOne({
+      where: {
+        companyId: data.companyId,
 
-  async create(
-    data: CreateCompanySolutionDto,
-  ) {
-
-
-    const exists =
-      await this.repo.findOne({
-
-        where: {
-
-          companyId:
-            data.companyId,
-
-          solutionId:
-            data.solutionId,
-
-        },
-
-      });
-
-
-
+        solutionId: data.solutionId,
+      },
+    });
 
     if (exists) {
-
-
       throw new BadRequestException(
-
         'Esta empresa já possui essa solução vinculada',
-
       );
-
-
     }
 
-
-
-
-    const entity =
-      this.repo.create(data);
-
-
-
+    const entity = this.repo.create(data);
 
     return this.repo.save(entity);
-
-
   }
-
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -125,126 +54,49 @@ export class CompanySolutionsService {
   ==================================================
   */
 
-
   async createMany(
+    companyId: number,
 
-    companyId:number,
-
-    solutionIds:number[],
-
+    solutionIds: number[],
   ) {
-
-
-    if(
-      !solutionIds ||
-      solutionIds.length === 0
-    ){
-
-      throw new BadRequestException(
-
-        'Nenhuma solução selecionada',
-
-      );
-
+    if (!solutionIds || solutionIds.length === 0) {
+      throw new BadRequestException('Nenhuma solução selecionada');
     }
 
+    const created: CompanySolution[] = [];
 
+    for (const solutionId of solutionIds) {
+      const exists = await this.repo.findOne({
+        where: {
+          companyId,
 
-
-
-
-    const created:CompanySolution[] = [];
-
-
-
-
-
-    for(
-      const solutionId
-      of solutionIds
-    ){
-
-
-
-      const exists =
-        await this.repo.findOne({
-
-          where:{
-
-            companyId,
-
-            solutionId,
-
-          },
-
-        });
-
-
-
-
+          solutionId,
+        },
+      });
 
       /*
       Evita duplicidade
       */
 
+      if (!exists) {
+        const entity = this.repo.create({
+          companyId,
 
-      if(!exists){
+          solutionId,
+        });
 
-
-
-        const entity =
-          this.repo.create({
-
-            companyId,
-
-            solutionId,
-
-          });
-
-
-
-        const saved =
-          await this.repo.save(entity);
-
-
+        const saved = await this.repo.save(entity);
 
         created.push(saved);
-
-
-
       }
-
-
-
     }
 
-
-
-
-
     return {
+      message: 'Soluções vinculadas com sucesso',
 
-
-      message:
-        'Soluções vinculadas com sucesso',
-
-
-      data:
-        created,
-
-
+      data: created,
     };
-
-
   }
-
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -252,22 +104,9 @@ export class CompanySolutionsService {
   ==================================================
   */
 
-
-  async findAll(){
-
-
+  async findAll() {
     return this.repo.find();
-
-
   }
-
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -275,53 +114,19 @@ export class CompanySolutionsService {
   ==================================================
   */
 
+  async findOne(id: number) {
+    const entity = await this.repo.findOne({
+      where: {
+        id,
+      },
+    });
 
-  async findOne(
-    id:number,
-  ){
-
-
-    const entity =
-      await this.repo.findOne({
-
-        where:{
-          id,
-        },
-
-      });
-
-
-
-
-
-    if(!entity){
-
-
-      throw new NotFoundException(
-
-        `CompanySolution ${id} not found`,
-
-      );
-
-
+    if (!entity) {
+      throw new NotFoundException(`CompanySolution ${id} not found`);
     }
 
-
-
-
-
     return entity;
-
-
   }
-
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -329,28 +134,13 @@ export class CompanySolutionsService {
   ==================================================
   */
 
-
-  async findByCompany(
-    companyId:number,
-  ){
-
+  async findByCompany(companyId: number) {
     return this.repo.find({
-
-      where:{
+      where: {
         companyId,
       },
-
     });
-
   }
-
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -358,45 +148,21 @@ export class CompanySolutionsService {
   ==================================================
   */
 
-
   async update(
+    id: number,
 
-    id:number,
-
-    data:UpdateCompanySolutionDto,
-
-  ){
-
-
-    const entity =
-      await this.findOne(id);
-
-
-
+    data: UpdateCompanySolutionDto,
+  ) {
+    const entity = await this.findOne(id);
 
     Object.assign(
-
       entity,
 
       data,
-
     );
 
-
-
-
     return this.repo.save(entity);
-
-
   }
-
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -404,32 +170,13 @@ export class CompanySolutionsService {
   ==================================================
   */
 
-
-  async remove(
-    id:number,
-  ){
-
-
+  async remove(id: number) {
     await this.findOne(id);
-
-
 
     await this.repo.delete(id);
 
-
-
     return {
-
-
-      message:
-        'CompanySolution deleted successfully',
-
-
+      message: 'CompanySolution deleted successfully',
     };
-
-
   }
-
-
-
 }

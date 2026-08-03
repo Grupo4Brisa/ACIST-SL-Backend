@@ -43,29 +43,22 @@ export class LoginTokensService {
   // VALIDAR TOKEN
   // =====================================
   async validateToken(token: string) {
-    const loginToken =
-      await this.loginTokensRepository.findOne({
-        where: {
-          token,
-        },
-      });
+    const loginToken = await this.loginTokensRepository.findOne({
+      where: {
+        token,
+      },
+    });
 
     if (!loginToken) {
-      throw new NotFoundException(
-        'Token inválido.',
-      );
+      throw new NotFoundException('Token inválido.');
     }
 
     if (loginToken.used) {
-      throw new BadRequestException(
-        'Token já utilizado.',
-      );
+      throw new BadRequestException('Token já utilizado.');
     }
 
     if (loginToken.expiresAt < new Date()) {
-      throw new BadRequestException(
-        'Token expirado.',
-      );
+      throw new BadRequestException('Token expirado.');
     }
 
     return {
@@ -89,20 +82,15 @@ export class LoginTokensService {
   // MARCAR COMO UTILIZADO
   // =====================================
   async markAsUsed(token: string) {
-    const loginToken =
-      await this.findByToken(token);
+    const loginToken = await this.findByToken(token);
 
     if (!loginToken) {
-      throw new NotFoundException(
-        'Token não encontrado.',
-      );
+      throw new NotFoundException('Token não encontrado.');
     }
 
     loginToken.used = true;
 
-    return this.loginTokensRepository.save(
-      loginToken,
-    );
+    return this.loginTokensRepository.save(loginToken);
   }
 
   // =====================================

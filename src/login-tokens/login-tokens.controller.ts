@@ -1,17 +1,6 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Post,
-  Body,
-} from '@nestjs/common';
+import { Controller, Get, Param, Post, Body } from '@nestjs/common';
 
-import {
-  ApiTags,
-  ApiOperation,
-  ApiParam,
-  ApiBody,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiBody } from '@nestjs/swagger';
 
 import { LoginTokensService } from './login-tokens.service';
 
@@ -20,9 +9,7 @@ import { CreateLoginTokenDto } from './dto/create-login-token.dto';
 @ApiTags('Login Tokens')
 @Controller('login-tokens')
 export class LoginTokensController {
-  constructor(
-    private readonly loginTokensService: LoginTokensService,
-  ) {}
+  constructor(private readonly loginTokensService: LoginTokensService) {}
 
   // =====================================
   // GERAR TOKEN
@@ -40,9 +27,7 @@ export class LoginTokensController {
     @Body()
     body: CreateLoginTokenDto,
   ) {
-    return this.loginTokensService.createToken(
-      body.companyId,
-    );
+    return this.loginTokensService.createToken(body.companyId);
   }
 
   // =====================================
@@ -60,9 +45,7 @@ export class LoginTokensController {
     @Param('token')
     token: string,
   ) {
-    return this.loginTokensService.validateToken(
-      token,
-    );
+    return this.loginTokensService.validateToken(token);
   }
 
   // =====================================
@@ -80,8 +63,6 @@ export class LoginTokensController {
     @Param('token')
     token: string,
   ) {
-    return this.loginTokensService.consumeToken(
-      token,
-    );
+    return this.loginTokensService.consumeToken(token);
   }
 }

@@ -8,29 +8,18 @@ import {
   Post,
 } from '@nestjs/common';
 
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBody,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 
 import { CompanyContactsService } from './company-contacts.service';
 
 import { CreateCompanyContactDto } from './dto/create-company-contact.dto';
 
-
-
 @ApiTags('Company Contacts')
 @Controller('company-contacts')
 export class CompanyContactsController {
-
-
   constructor(
     private readonly companyContactsService: CompanyContactsService,
   ) {}
-
-
 
   // =====================================
   // LISTAR TODOS OS CONTATOS
@@ -45,14 +34,8 @@ export class CompanyContactsController {
     description: 'Lista de contatos retornada com sucesso',
   })
   findAll() {
-
     return this.companyContactsService.findAll();
-
   }
-
-
-
-
 
   // =====================================
   // LISTAR CONTATOS POR EMPRESA
@@ -67,24 +50,11 @@ export class CompanyContactsController {
     description: 'Contatos da empresa retornados com sucesso',
   })
   findByCompany(
-
-    @Param(
-      'companyId',
-      ParseIntPipe,
-    )
+    @Param('companyId', ParseIntPipe)
     companyId: number,
-
   ) {
-
-    return this.companyContactsService.findByCompany(
-      companyId,
-    );
-
+    return this.companyContactsService.findByCompany(companyId);
   }
-
-
-
-
 
   // =====================================
   // CRIAR UM CONTATO
@@ -102,21 +72,11 @@ export class CompanyContactsController {
     description: 'Contato criado com sucesso',
   })
   create(
-
     @Body()
     body: CreateCompanyContactDto,
-
   ) {
-
-    return this.companyContactsService.create(
-      body,
-    );
-
+    return this.companyContactsService.create(body);
   }
-
-
-
-
 
   // =====================================
   // CRIAR VÁRIOS CONTATOS
@@ -136,22 +96,14 @@ export class CompanyContactsController {
     description: 'Contatos criados com sucesso',
   })
   createMany(
-
     @Body()
     body: CreateCompanyContactDto[],
-
   ) {
-
-    return this.companyContactsService.createMany(
-      body,
-    );
-
+    return this.companyContactsService.createMany(body);
   }
 
   @Delete(':id')
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.companyContactsService.remove(id);
   }
-
-
 }

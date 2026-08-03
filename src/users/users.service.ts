@@ -19,10 +19,8 @@ import { UpdateUserDto } from './dto/update-user.dto';
 
 import { UserRole } from './user-role.enum';
 
-
 @Injectable()
 export class UsersService implements OnModuleInit {
-
   private readonly logger = new Logger(UsersService.name);
 
   constructor(
@@ -31,7 +29,6 @@ export class UsersService implements OnModuleInit {
 
     private readonly configService: ConfigService,
   ) {}
-
 
   // =========================
   // SEED DO ADMIN INICIAL
@@ -49,7 +46,6 @@ export class UsersService implements OnModuleInit {
   // produção) define as suas.
   // =========================
   async onModuleInit() {
-
     const adminCount = await this.userRepository.count({
       where: {
         role: UserRole.COLABORADOR_ADMIN,
@@ -68,8 +64,8 @@ export class UsersService implements OnModuleInit {
     if (!email || !password) {
       this.logger.warn(
         'Nenhum administrador encontrado e SEED_ADMIN_EMAIL/SEED_ADMIN_PASSWORD ' +
-        'não foram configurados. Pulando criação do admin inicial. ' +
-        'Defina essas variáveis de ambiente para criar o primeiro acesso automaticamente.',
+          'não foram configurados. Pulando criação do admin inicial. ' +
+          'Defina essas variáveis de ambiente para criar o primeiro acesso automaticamente.',
       );
       return;
     }
@@ -86,283 +82,162 @@ export class UsersService implements OnModuleInit {
 
     await this.userRepository.save(admin);
 
-    this.logger.log(
-      `Administrador inicial criado com sucesso: ${email}`,
-    );
-
+    this.logger.log(`Administrador inicial criado com sucesso: ${email}`);
   }
-
 
   // =========================
   // LISTAR USUÁRIOS
   // =========================
   findAll() {
     return this.userRepository.find({
-      select: [
-        'id',
-        'name',
-        'email',
-        'role',
-        'active',
-        'createdAt',
-      ],
+      select: ['id', 'name', 'email', 'role', 'active', 'createdAt'],
     });
   }
-
-
 
   // =========================
   // BUSCAR USUÁRIO POR ID
   // =========================
   async findOne(id: number) {
-
-    const user =
-      await this.userRepository.findOne({
-        where: {
-          id,
-        },
-        select: [
-          'id',
-          'name',
-          'email',
-          'role',
-          'active',
-          'createdAt',
-        ],
-      });
-
+    const user = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+      select: ['id', 'name', 'email', 'role', 'active', 'createdAt'],
+    });
 
     if (!user) {
-      throw new NotFoundException(
-        'Usuário não encontrado',
-      );
+      throw new NotFoundException('Usuário não encontrado');
     }
-
 
     return user;
   }
-
-
 
   // =========================
   // BUSCAR POR EMAIL
   // SEM SENHA
   // =========================
   findByEmail(email: string) {
-
     return this.userRepository.findOne({
       where: {
         email,
       },
     });
-
   }
-
-
 
   // =========================
   // BUSCAR USUÁRIO PARA LOGIN
   // COM SENHA
   // =========================
   findAuthUserByEmail(email: string) {
-
     return this.userRepository.findOne({
       where: {
         email,
       },
-      select: [
-        'id',
-        'name',
-        'email',
-        'password',
-        'role',
-        'active',
-      ],
+      select: ['id', 'name', 'email', 'password', 'role', 'active'],
     });
-
   }
-
-
 
   // =========================
   // BUSCAR USUÁRIO PELO JWT
   // SEM SENHA
   // =========================
   async findByIdForAuth(id: number) {
-
-    const user =
-      await this.userRepository.findOne({
-        where: {
-          id,
-        },
-        select: [
-          'id',
-          'name',
-          'email',
-          'role',
-          'active',
-        ],
-      });
-
+    const user = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+      select: ['id', 'name', 'email', 'role', 'active'],
+    });
 
     if (!user) {
-      throw new NotFoundException(
-        'Usuário não encontrado',
-      );
+      throw new NotFoundException('Usuário não encontrado');
     }
-
 
     return user;
   }
-
-
 
   // =========================
   // CRIAR USUÁRIO
   // =========================
   async create(data: CreateUserDto) {
+    const exists = await this.userRepository.findOne({
+      where: {
+        email: data.email,
+      },
+    });
 
-    const exists =
-      await this.userRepository.findOne({
+    if (exists) {
+      throw new ConflictException('Email já cadastrado');
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    const user = this.userRepository.create({
+      ...data,
+      password: hashedPassword,
+      active: data.active ?? true,
+    });
+
+    const saved = await this.userRepository.save(user);
+
+    const { password, ...userWithoutPassword } = saved;
+
+    return userWithoutPassword;
+  }
+
+  // =========================
+  // ATUALIZAR USUÁRIO
+  // =========================
+  async update(id: number, data: UpdateUserDto) {
+    const user = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    if (data.email) {
+      const emailExists = await this.userRepository.findOne({
         where: {
           email: data.email,
         },
       });
 
-
-    if (exists) {
-      throw new ConflictException(
-        'Email já cadastrado',
-      );
-    }
-
-
-    const hashedPassword =
-      await bcrypt.hash(
-        data.password,
-        10,
-      );
-
-
-    const user =
-      this.userRepository.create({
-        ...data,
-        password: hashedPassword,
-        active: data.active ?? true,
-      });
-
-
-    const saved =
-      await this.userRepository.save(user);
-
-
-    const {
-      password,
-      ...userWithoutPassword
-    } = saved;
-
-
-    return userWithoutPassword;
-  }
-
-
-
-  // =========================
-  // ATUALIZAR USUÁRIO
-  // =========================
-  async update(
-    id: number,
-    data: UpdateUserDto,
-  ) {
-
-    const user =
-      await this.userRepository.findOne({
-        where: {
-          id,
-        },
-      });
-
-
-    if (!user) {
-      throw new NotFoundException(
-        'Usuário não encontrado',
-      );
-    }
-
-
-
-    if (data.email) {
-
-      const emailExists =
-        await this.userRepository.findOne({
-          where: {
-            email: data.email,
-          },
-        });
-
-
-      if (
-        emailExists &&
-        emailExists.id !== id
-      ) {
-        throw new ConflictException(
-          'Email já está em uso',
-        );
+      if (emailExists && emailExists.id !== id) {
+        throw new ConflictException('Email já está em uso');
       }
-
     }
-
-
 
     if (data.password) {
-
-      data.password =
-        await bcrypt.hash(
-          data.password,
-          10,
-        );
-
+      data.password = await bcrypt.hash(data.password, 10);
     }
 
-
-
-    await this.userRepository.update(
-      id,
-      data,
-    );
-
+    await this.userRepository.update(id, data);
 
     return this.findOne(id);
   }
-
-
 
   // =========================
   // REMOVER USUÁRIO
   // =========================
   async remove(id: number) {
-
-    const user =
-      await this.userRepository.findOne({
-        where: {
-          id,
-        },
-      });
-
+    const user = await this.userRepository.findOne({
+      where: {
+        id,
+      },
+    });
 
     if (!user) {
-      throw new NotFoundException(
-        'Usuário não encontrado',
-      );
+      throw new NotFoundException('Usuário não encontrado');
     }
-
 
     await this.userRepository.delete(id);
 
-
     return {
-      message:
-        'Usuário removido com sucesso',
+      message: 'Usuário removido com sucesso',
     };
   }
 }

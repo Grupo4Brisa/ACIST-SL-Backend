@@ -33,31 +33,22 @@ import { Roles } from '../auth/decorators/roles.decorator';
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {
-
-  constructor(
-    private readonly usersService: UsersService,
-  ) {}
+  constructor(private readonly usersService: UsersService) {}
 
   // =========================
   // LISTAR USUÁRIOS
   // SOMENTE ADMIN
   // =========================
   @Get()
-@ApiBearerAuth('access-token')
-@UseGuards(
-  JwtAuthGuard,
-  RolesGuard,
-)
-@Roles(
-  UserRole.COLABORADOR_ADMIN,
-  UserRole.COLABORADOR_APROVADOR,
-)
-@ApiOperation({
-  summary: 'Listar todos os usuários',
-})
-findAll() {
-  return this.usersService.findAll();
-}
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
+  @ApiOperation({
+    summary: 'Listar todos os usuários',
+  })
+  findAll() {
+    return this.usersService.findAll();
+  }
 
   // =========================
   // BUSCAR POR ID
@@ -65,13 +56,8 @@ findAll() {
   // =========================
   @Get(':id')
   @ApiBearerAuth('access-token')
-  @UseGuards(
-    JwtAuthGuard,
-    RolesGuard,
-  )
-  @Roles(
-    UserRole.COLABORADOR_ADMIN,
-  )
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.COLABORADOR_ADMIN)
   @ApiOperation({
     summary: 'Buscar usuário por ID',
   })
@@ -80,10 +66,7 @@ findAll() {
     example: 1,
   })
   findOne(
-    @Param(
-      'id',
-      ParseIntPipe,
-    )
+    @Param('id', ParseIntPipe)
     id: number,
   ) {
     return this.usersService.findOne(id);
@@ -117,30 +100,19 @@ findAll() {
   // =========================
   @Patch(':id')
   @ApiBearerAuth('access-token')
-  @UseGuards(
-    JwtAuthGuard,
-    RolesGuard,
-  )
-  @Roles(
-    UserRole.COLABORADOR_APROVADOR,
-  )
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({
     summary: 'Atualizar usuário',
   })
   update(
-    @Param(
-      'id',
-      ParseIntPipe,
-    )
+    @Param('id', ParseIntPipe)
     id: number,
 
     @Body()
     body: UpdateUserDto,
   ) {
-    return this.usersService.update(
-      id,
-      body,
-    );
+    return this.usersService.update(id, body);
   }
 
   // =========================
@@ -149,13 +121,8 @@ findAll() {
   // =========================
   @Delete(':id')
   @ApiBearerAuth('access-token')
-  @UseGuards(
-    JwtAuthGuard,
-    RolesGuard,
-  )
-  @Roles(
-    UserRole.COLABORADOR_APROVADOR,
-  )
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({
     summary: 'Remover usuário',
   })
@@ -164,10 +131,7 @@ findAll() {
     example: 1,
   })
   remove(
-    @Param(
-      'id',
-      ParseIntPipe,
-    )
+    @Param('id', ParseIntPipe)
     id: number,
   ) {
     return this.usersService.remove(id);

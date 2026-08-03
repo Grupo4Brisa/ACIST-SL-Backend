@@ -73,32 +73,48 @@ export class SocialNetworksService {
   // =========================
   // UPDATE
   // =========================
-  async update(companyId: number, data: UpdateSocialNetworkDto, userId?: number | null) {
+  async update(
+    companyId: number,
+    data: UpdateSocialNetworkDto,
+    userId?: number | null,
+  ) {
     const social = await this.findByCompany(companyId);
 
     // Captura valores ANTES do merge
     const before = {
-      facebook:  social.facebook,
+      facebook: social.facebook,
       instagram: social.instagram,
-      linkedin:  social.linkedin,
-      other:     social.other,
+      linkedin: social.linkedin,
+      other: social.other,
     };
 
     const updated = this.repo.merge(social, data);
 
     const fieldsChanged: string[] = [];
-    if (data.facebook  !== undefined && data.facebook  !== before.facebook)  fieldsChanged.push(`Facebook: "${before.facebook  ?? '-'}" → "${data.facebook  ?? '-'}"`);
-    if (data.instagram !== undefined && data.instagram !== before.instagram) fieldsChanged.push(`Instagram: "${before.instagram ?? '-'}" → "${data.instagram ?? '-'}"`);
-    if (data.linkedin  !== undefined && data.linkedin  !== before.linkedin)  fieldsChanged.push(`LinkedIn: "${before.linkedin  ?? '-'}" → "${data.linkedin  ?? '-'}"`);
-    if (data.other     !== undefined && data.other     !== before.other)     fieldsChanged.push(`Outras: "${before.other ?? '-'}" → "${data.other ?? '-'}"`);
+    if (data.facebook !== undefined && data.facebook !== before.facebook)
+      fieldsChanged.push(
+        `Facebook: "${before.facebook ?? '-'}" → "${data.facebook ?? '-'}"`,
+      );
+    if (data.instagram !== undefined && data.instagram !== before.instagram)
+      fieldsChanged.push(
+        `Instagram: "${before.instagram ?? '-'}" → "${data.instagram ?? '-'}"`,
+      );
+    if (data.linkedin !== undefined && data.linkedin !== before.linkedin)
+      fieldsChanged.push(
+        `LinkedIn: "${before.linkedin ?? '-'}" → "${data.linkedin ?? '-'}"`,
+      );
+    if (data.other !== undefined && data.other !== before.other)
+      fieldsChanged.push(
+        `Outras: "${before.other ?? '-'}" → "${data.other ?? '-'}"`,
+      );
 
     const savedUpdate = await this.repo.save(updated);
     if (fieldsChanged.length > 0) {
       try {
         await this.approvalsService.createLog({
           companyId,
-          userId:      userId ?? undefined,
-          action:      ApprovalAction.COMPLETED,
+          userId: userId ?? undefined,
+          action: ApprovalAction.COMPLETED,
           observation: `Redes Sociais editadas: ${fieldsChanged.join(' | ')}`,
         });
       } catch (e) {

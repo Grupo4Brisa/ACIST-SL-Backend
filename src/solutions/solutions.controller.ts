@@ -8,11 +8,7 @@ import {
   Delete,
 } from '@nestjs/common';
 
-import {
-  ApiTags,
-  ApiOperation,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 import { SolutionsService } from './solutions.service';
 import { CreateSolutionDto } from './dto/create-solution.dto';
@@ -44,10 +40,7 @@ export class SolutionsController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar solução' })
-  update(
-    @Param('id') id: string,
-    @Body() body: UpdateSolutionDto,
-  ) {
+  update(@Param('id') id: string, @Body() body: UpdateSolutionDto) {
     return this.service.update(+id, body);
   }
 

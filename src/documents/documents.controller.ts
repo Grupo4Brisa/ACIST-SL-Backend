@@ -37,10 +37,7 @@ import { UserRole } from '../users/user-role.enum';
 @ApiTags('Documents')
 @Controller('documents')
 export class DocumentsController {
-
-  constructor(
-    private readonly service: DocumentsService,
-  ) {}
+  constructor(private readonly service: DocumentsService) {}
 
   // =========================
   // CREATE (UPLOAD)
@@ -75,23 +72,22 @@ export class DocumentsController {
     @UploadedFile() file: Express.Multer.File,
     @Req() req: any,
   ) {
+    return this.service.create(
+      {
+        companyId: body.companyId,
 
-    return this.service.create({
+        documentType: body.documentType,
 
-      companyId: body.companyId,
+        fileName: file.originalname,
 
-      documentType: body.documentType,
+        mimeType: file.mimetype,
 
-      fileName: file.originalname,
+        fileSize: file.size,
 
-      mimeType: file.mimetype,
-
-      fileSize: file.size,
-
-      fileContent: file.buffer,
-
-    }, req.user ?? null);
-
+        fileContent: file.buffer,
+      },
+      req.user ?? null,
+    );
   }
 
   // =========================
@@ -99,17 +95,12 @@ export class DocumentsController {
   // =========================
 
   @Get()
-  @Roles(
-    UserRole.COLABORADOR_ADMIN,
-    UserRole.COLABORADOR_APROVADOR,
-  )
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({
     summary: 'Listar documentos',
   })
   findAll() {
-
     return this.service.findAll();
-
   }
 
   // =========================
@@ -129,10 +120,7 @@ export class DocumentsController {
   // =========================
 
   @Get(':id')
-  @Roles(
-    UserRole.COLABORADOR_ADMIN,
-    UserRole.COLABORADOR_APROVADOR,
-  )
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({
     summary: 'Buscar documento por ID',
   })
@@ -140,12 +128,8 @@ export class DocumentsController {
     name: 'id',
     example: 1,
   })
-  findOne(
-    @Param('id') id: string,
-  ) {
-
+  findOne(@Param('id') id: string) {
     return this.service.findOne(+id);
-
   }
 
   // =========================
@@ -153,10 +137,7 @@ export class DocumentsController {
   // =========================
 
   @Get(':id/download')
-  @Roles(
-    UserRole.COLABORADOR_ADMIN,
-    UserRole.COLABORADOR_APROVADOR,
-  )
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({
     summary: 'Download do documento',
   })
@@ -164,12 +145,8 @@ export class DocumentsController {
     name: 'id',
     example: 1,
   })
-  download(
-    @Param('id') id: string,
-  ): Promise<StreamableFile> {
-
+  download(@Param('id') id: string): Promise<StreamableFile> {
     return this.service.download(+id);
-
   }
 
   // =========================
@@ -177,10 +154,7 @@ export class DocumentsController {
   // =========================
 
   @Patch(':id')
-  @Roles(
-    UserRole.COLABORADOR_ADMIN,
-    UserRole.COLABORADOR_APROVADOR,
-  )
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
   @ApiOperation({
     summary: 'Atualizar documento',
   })
@@ -191,13 +165,7 @@ export class DocumentsController {
     @Body() body: UpdateDocumentDto,
     @UploadedFile() file?: Express.Multer.File,
   ) {
-
-    return this.service.updateWithFile(
-      +id,
-      body,
-      file,
-    );
-
+    return this.service.updateWithFile(+id, body, file);
   }
 
   // =========================
@@ -205,18 +173,11 @@ export class DocumentsController {
   // =========================
 
   @Delete(':id')
-  @Roles(
-    UserRole.COLABORADOR_ADMIN,
-  )
+  @Roles(UserRole.COLABORADOR_ADMIN)
   @ApiOperation({
     summary: 'Remover documento',
   })
-  remove(
-    @Param('id') id: string,
-  ) {
-
+  remove(@Param('id') id: string) {
     return this.service.remove(+id);
-
   }
-
 }

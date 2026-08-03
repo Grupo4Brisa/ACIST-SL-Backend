@@ -4,98 +4,54 @@ import { InjectRepository } from '@nestjs/typeorm';
 
 import { Repository } from 'typeorm';
 
-
 import { CompanyContact } from './entities/company-contact.entity';
 
 import { CreateCompanyContactDto } from './dto/create-company-contact.dto';
 import { ApprovalsService } from '../approvals/approvals.service';
 import { ApprovalAction } from '../approvals/approval-action.enum';
 
-
-
 @Injectable()
 export class CompanyContactsService {
-
-
   constructor(
-
     @InjectRepository(CompanyContact)
-
-    private readonly companyContactRepository:
-      Repository<CompanyContact>,
+    private readonly companyContactRepository: Repository<CompanyContact>,
 
     private readonly approvalsService: ApprovalsService,
-
   ) {}
-
-
-
-
 
   // =====================================
   // LISTAR TODOS OS CONTATOS
   // =====================================
 
   findAll() {
-
     return this.companyContactRepository.find();
-
   }
-
-
-
-
 
   // =====================================
   // LISTAR CONTATOS POR EMPRESA
   // =====================================
 
-  findByCompany(
-    companyId:number,
-  ) {
-
+  findByCompany(companyId: number) {
     return this.companyContactRepository.find({
-
-      where:{
+      where: {
         companyId,
       },
 
-      order:{
-        id:'ASC',
+      order: {
+        id: 'ASC',
       },
-
     });
-
   }
-
-
-
-
 
   // =====================================
   // CRIAR UM CONTATO
   // =====================================
 
-  async create(
-    contactData:CreateCompanyContactDto,
-  ) {
+  async create(contactData: CreateCompanyContactDto) {
+    const contact = this.companyContactRepository.create(contactData);
 
-
-    const contact =
-      this.companyContactRepository.create(
-        contactData,
-      );
-
-
-    return this.companyContactRepository.save(
-      contact,
-    );
-
+    return this.companyContactRepository.save(contact);
   }
-
-
-
-
 
   // =====================================
   // CRIAR VÁRIOS CONTATOS
@@ -103,18 +59,14 @@ export class CompanyContactsService {
   // =====================================
 
   async createMany(
-    contacts:CreateCompanyContactDto[],
+    contacts: CreateCompanyContactDto[],
     userId?: number | null,
   ) {
-
-    const entities =
-      this.companyContactRepository.create(
-        contacts,
-      );
+    const entities = this.companyContactRepository.create(contacts);
 
     const saved = await this.companyContactRepository.save(entities);
     if (contacts.length > 0) {
-      const names = contacts.map(c => c.name).join(', ');
+      const names = contacts.map((c) => c.name).join(', ');
       await this.approvalsService.createLog({
         companyId: contacts[0].companyId,
         userId: userId ?? null,
@@ -123,16 +75,10 @@ export class CompanyContactsService {
       });
     }
     return saved;
-
   }
 
   async remove(id: number) {
     await this.companyContactRepository.delete(id);
     return { message: 'Contato removido com sucesso' };
   }
-
-
-
-
-
 }

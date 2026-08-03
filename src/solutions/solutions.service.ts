@@ -28,14 +28,15 @@ const SOLUTIONS_SEED: { name: string; description?: string }[] = [
   { name: 'Carta de Exclusividade' },
   { name: 'Capacitacoes (Cursos e Eventos)' },
   { name: 'Locacoes de Espacos (Salas, Auditorio, Sede e Rancho)' },
-  { name: 'Eventos (Boletim, Terca, Momento, Viva Sao Leo, Pedal Seguro, Matchmaking...)' },
+  {
+    name: 'Eventos (Boletim, Terca, Momento, Viva Sao Leo, Pedal Seguro, Matchmaking...)',
+  },
   { name: 'Convenios / Rede de Vantagens' },
   { name: 'Programa Empreender (Projeto de Nucleos)' },
 ];
 
 @Injectable()
 export class SolutionsService implements OnModuleInit {
-
   private readonly logger = new Logger(SolutionsService.name);
 
   constructor(
@@ -49,25 +50,19 @@ export class SolutionsService implements OnModuleInit {
   // é inicializado (toda subida da API).
   // =========================
   async onModuleInit() {
-
     const count = await this.repo.count();
 
     if (count > 0) {
       return;
     }
 
-    this.logger.log(
-      'Tabela solutions vazia. Inserindo soluções padrão...',
-    );
+    this.logger.log('Tabela solutions vazia. Inserindo soluções padrão...');
 
     const entities = this.repo.create(SOLUTIONS_SEED);
 
     await this.repo.save(entities);
 
-    this.logger.log(
-      `${SOLUTIONS_SEED.length} soluções inseridas com sucesso.`,
-    );
-
+    this.logger.log(`${SOLUTIONS_SEED.length} soluções inseridas com sucesso.`);
   }
 
   // =========================

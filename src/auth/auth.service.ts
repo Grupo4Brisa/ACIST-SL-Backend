@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -11,79 +8,37 @@ import { CompaniesService } from '../companies/companies.service';
 
 import { CompanyStatus } from '../companies/company-status.enum';
 
-
 @Injectable()
 export class AuthService {
-
   constructor(
+    private readonly usersService: UsersService,
 
-    private readonly usersService:
-      UsersService,
+    private readonly companiesService: CompaniesService,
 
-    private readonly companiesService:
-      CompaniesService,
-
-    private readonly jwtService:
-      JwtService,
-
+    private readonly jwtService: JwtService,
   ) {}
-
-
 
   // =========================
   // LOGIN COLABORADOR
   // =========================
-  async login(
-    email: string,
-    password: string,
-  ) {
-
-    const user =
-      await this.usersService.findAuthUserByEmail(
-        email,
-      );
-
+  async login(email: string, password: string) {
+    const user = await this.usersService.findAuthUserByEmail(email);
 
     if (!user) {
-
-      throw new UnauthorizedException(
-        'Credenciais inválidas',
-      );
-
+      throw new UnauthorizedException('Credenciais inválidas');
     }
-
-
 
     if (!user.active) {
-
-      throw new UnauthorizedException(
-        'Usuário inativo',
-      );
-
+      throw new UnauthorizedException('Usuário inativo');
     }
 
-
-
-    const passwordMatch =
-      await bcrypt.compare(
-        password,
-        user.password,
-      );
-
-
+    const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-
-      throw new UnauthorizedException(
-        'Credenciais inválidas',
-      );
-
+      throw new UnauthorizedException('Credenciais inválidas');
     }
 
-
-
     const payload = {
-
       sub: user.id,
 
       type: 'USER',
@@ -91,19 +46,12 @@ export class AuthService {
       email: user.email,
 
       role: user.role,
-
     };
 
-
-
     return {
-
-      access_token:
-        this.jwtService.sign(payload),
-
+      access_token: this.jwtService.sign(payload),
 
       user: {
-
         id: user.id,
 
         name: user.name,
@@ -113,80 +61,34 @@ export class AuthService {
         role: user.role,
 
         active: user.active,
-
       },
-
     };
-
   }
-
-
-
-
 
   // =========================
   // LOGIN ASSOCIADO / EMPRESA
   // =========================
-  async companyLogin(
-    email: string,
-    password: string,
-  ) {
-
-
-    const company =
-      await this.companiesService
-        .findAuthCompanyByEmail(
-          email,
-        );
-
-
+  async companyLogin(email: string, password: string) {
+    const company = await this.companiesService.findAuthCompanyByEmail(email);
 
     if (!company) {
-
-      throw new UnauthorizedException(
-        'Credenciais inválidas',
-      );
-
+      throw new UnauthorizedException('Credenciais inválidas');
     }
 
-
-
-    const passwordMatch =
-      await bcrypt.compare(
-        password,
-        company.password,
-      );
-
-
+    const passwordMatch = await bcrypt.compare(password, company.password);
 
     if (!passwordMatch) {
-
-      throw new UnauthorizedException(
-        'Credenciais inválidas',
-      );
-
+      throw new UnauthorizedException('Credenciais inválidas');
     }
-
-
 
     // Empresas INCOMPLETE e PENDING_APPROVAL
     // podem acessar a área delas.
     // Apenas empresas INACTIVE são bloqueadas.
-    if (
-      company.status ===
-      CompanyStatus.INACTIVE
-    ) {
-
-      throw new UnauthorizedException(
-        'Empresa inativa.',
-      );
-
+    if (company.status === CompanyStatus.INACTIVE) {
+      throw new UnauthorizedException('Empresa inativa.');
     }
 
-
-
     const payload = {
-
       sub: company.id,
 
       type: 'COMPANY',
@@ -194,34 +96,20 @@ export class AuthService {
       email: company.email,
 
       status: company.status,
-
     };
-
-
 
     return {
-
-      access_token:
-        this.jwtService.sign(payload),
-
+      access_token: this.jwtService.sign(payload),
 
       company: {
-
         id: company.id,
 
-        companyName:
-          company.companyName,
+        companyName: company.companyName,
 
-        email:
-          company.email,
+        email: company.email,
 
-        status:
-          company.status,
-
+        status: company.status,
       },
-
     };
-
   }
-
 }

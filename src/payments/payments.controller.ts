@@ -31,9 +31,7 @@ import { UserRole } from '../users/user-role.enum';
 @ApiTags('Payments')
 @Controller('payments')
 export class PaymentsController {
-  constructor(
-    private readonly paymentsService: PaymentsService,
-  ) {}
+  constructor(private readonly paymentsService: PaymentsService) {}
 
   // =========================
   // LISTAR TODOS

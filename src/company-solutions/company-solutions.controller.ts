@@ -8,7 +8,6 @@ import {
   Delete,
 } from '@nestjs/common';
 
-
 import {
   ApiTags,
   ApiOperation,
@@ -17,34 +16,22 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 
-
 import { CompanySolutionsService } from './company-solutions.service';
 
 import { CreateCompanySolutionDto } from './dto/create-company-solution.dto';
 
 import { UpdateCompanySolutionDto } from './dto/update-company-solution.dto';
 
-
-
 @ApiTags('Company Solutions')
 @Controller('company-solutions')
 export class CompanySolutionsController {
-
-
-  constructor(
-    private readonly service: CompanySolutionsService,
-  ) {}
-
-
-
-
+  constructor(private readonly service: CompanySolutionsService) {}
 
   /*
   ==================================================
       VINCULAR UMA SOLUÇÃO
   ==================================================
   */
-
 
   @Post()
   @ApiOperation({
@@ -54,23 +41,12 @@ export class CompanySolutionsController {
     type: CreateCompanySolutionDto,
   })
   @ApiResponse({
-    status:201,
-    description:'Vínculo criado com sucesso',
+    status: 201,
+    description: 'Vínculo criado com sucesso',
   })
-  create(
-    @Body() body: CreateCompanySolutionDto,
-  ){
-
+  create(@Body() body: CreateCompanySolutionDto) {
     return this.service.create(body);
-
   }
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -78,69 +54,39 @@ export class CompanySolutionsController {
   ==================================================
   */
 
-
   @Post('company/:companyId')
   @ApiOperation({
-    summary:
-      'Salvar múltiplas soluções selecionadas pela empresa',
+    summary: 'Salvar múltiplas soluções selecionadas pela empresa',
   })
   @ApiParam({
-    name:'companyId',
-    example:1,
+    name: 'companyId',
+    example: 1,
   })
   @ApiBody({
-
-    schema:{
-
-      example:{
-
-        solutionIds:[
-          1,
-          2,
-          3
-        ]
-
-      }
-
-    }
-
+    schema: {
+      example: {
+        solutionIds: [1, 2, 3],
+      },
+    },
   })
   @ApiResponse({
-    status:201,
-    description:
-      'Soluções vinculadas com sucesso',
+    status: 201,
+    description: 'Soluções vinculadas com sucesso',
   })
-
-
   createMany(
-
-    @Param('companyId') companyId:string,
+    @Param('companyId') companyId: string,
 
     @Body()
-    body:{
-      solutionIds:number[]
-    }
-
-  ){
-
+    body: {
+      solutionIds: number[];
+    },
+  ) {
     return this.service.createMany(
-
       Number(companyId),
 
-      body.solutionIds
-
+      body.solutionIds,
     );
-
   }
-
-
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -148,26 +94,17 @@ export class CompanySolutionsController {
   ==================================================
   */
 
-
   @Get()
   @ApiOperation({ summary: 'Listar vínculos empresa x solução' })
-  findAll(){
+  findAll() {
     return this.service.findAll();
   }
 
   @Get('company/:companyId')
   @ApiOperation({ summary: 'Listar soluções por empresa' })
-  findByCompany(@Param('companyId') companyId: string){
+  findByCompany(@Param('companyId') companyId: string) {
     return this.service.findByCompany(Number(companyId));
   }
-
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -175,33 +112,17 @@ export class CompanySolutionsController {
   ==================================================
   */
 
-
   @Get(':id')
   @ApiOperation({
-    summary:
-      'Buscar vínculo por ID',
+    summary: 'Buscar vínculo por ID',
   })
   @ApiParam({
-    name:'id',
-    example:1,
+    name: 'id',
+    example: 1,
   })
-  findOne(
-    @Param('id') id:string,
-  ){
-
-    return this.service.findOne(
-      Number(id)
-    );
-
+  findOne(@Param('id') id: string) {
+    return this.service.findOne(Number(id));
   }
-
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -209,47 +130,29 @@ export class CompanySolutionsController {
   ==================================================
   */
 
-
   @Patch(':id')
   @ApiOperation({
-    summary:
-      'Atualizar vínculo empresa x solução',
+    summary: 'Atualizar vínculo empresa x solução',
   })
   @ApiParam({
-    name:'id',
-    example:1,
+    name: 'id',
+    example: 1,
   })
   @ApiBody({
-    type:UpdateCompanySolutionDto,
+    type: UpdateCompanySolutionDto,
   })
-
-
   update(
-
-    @Param('id') id:string,
+    @Param('id') id: string,
 
     @Body()
-    body:UpdateCompanySolutionDto,
-
-  ){
-
+    body: UpdateCompanySolutionDto,
+  ) {
     return this.service.update(
-
       Number(id),
 
-      body
-
+      body,
     );
-
   }
-
-
-
-
-
-
-
-
 
   /*
   ==================================================
@@ -257,27 +160,15 @@ export class CompanySolutionsController {
   ==================================================
   */
 
-
   @Delete(':id')
   @ApiOperation({
-    summary:
-      'Remover vínculo empresa x solução',
+    summary: 'Remover vínculo empresa x solução',
   })
-
   @ApiParam({
-    name:'id',
-    example:1,
+    name: 'id',
+    example: 1,
   })
-
-  remove(
-    @Param('id') id:string,
-  ){
-
-    return this.service.remove(
-      Number(id)
-    );
-
+  remove(@Param('id') id: string) {
+    return this.service.remove(Number(id));
   }
-
-
 }

@@ -1,28 +1,18 @@
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
-import {
-  InjectRepository,
-} from '@nestjs/typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
-import {
-  Repository,
-} from 'typeorm';
+import { Repository } from 'typeorm';
 
 import { Approval } from './entities/approval.entity';
 import { ApprovalAction } from './approval-action.enum';
 
-
 @Injectable()
 export class ApprovalsService {
-
   constructor(
     @InjectRepository(Approval)
     private readonly approvalRepository: Repository<Approval>,
   ) {}
-
 
   findAll() {
     return this.approvalRepository.find({
@@ -43,7 +33,9 @@ export class ApprovalsService {
     });
 
     // Resolve nomes de usuários via query
-    const userIds = [...new Set(approvals.map(a => a.userId).filter(Boolean))];
+    const userIds = [
+      ...new Set(approvals.map((a) => a.userId).filter(Boolean)),
+    ];
     let usersMap: Record<number, string> = {};
 
     if (userIds.length > 0) {
@@ -51,17 +43,19 @@ export class ApprovalsService {
         `SELECT id, name FROM users WHERE id = ANY($1)`,
         [userIds],
       );
-      rows.forEach((r: any) => { usersMap[r.id] = r.name; });
+      rows.forEach((r: any) => {
+        usersMap[r.id] = r.name;
+      });
     }
 
-    return approvals.map(a => ({
-      id:          a.id,
-      companyId:   a.companyId,
-      userId:      a.userId,
-      userName:    a.userId ? (usersMap[a.userId] ?? `ID ${a.userId}`) : 'Sistema',
-      action:      a.action,
+    return approvals.map((a) => ({
+      id: a.id,
+      companyId: a.companyId,
+      userId: a.userId,
+      userName: a.userId ? (usersMap[a.userId] ?? `ID ${a.userId}`) : 'Sistema',
+      action: a.action,
       observation: a.observation,
-      createdAt:   a.createdAt,
+      createdAt: a.createdAt,
     }));
   }
 
@@ -72,13 +66,12 @@ export class ApprovalsService {
     observation?: string;
   }) {
     const approval = this.approvalRepository.create({
-      companyId:   data.companyId,
-      userId:      data.userId ?? undefined,
-      action:      data.action,
+      companyId: data.companyId,
+      userId: data.userId ?? undefined,
+      action: data.action,
       observation: data.observation,
-      createdAt:   new Date(),
+      createdAt: new Date(),
     });
     return this.approvalRepository.save(approval);
   }
-
 }

@@ -6,22 +6,12 @@ import { LoginTokensService } from './login-tokens.service';
 import { LoginToken } from './entities/login-token.entity';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      LoginToken,
-    ]),
-  ],
+  imports: [TypeOrmModule.forFeature([LoginToken])],
 
-  controllers: [
-    LoginTokensController,
-  ],
+  controllers: [LoginTokensController],
 
-  providers: [
-    LoginTokensService,
-  ],
+  providers: [LoginTokensService],
 
-  exports: [
-    LoginTokensService,
-  ],
+  exports: [LoginTokensService],
 })
 export class LoginTokensModule {}

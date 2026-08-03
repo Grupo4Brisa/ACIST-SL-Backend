@@ -15,8 +15,8 @@ import { PaymentStatus } from './payment-status.enum';
 import { CompaniesService } from '../companies/companies.service';
 import { CompanyStatus } from '../companies/company-status.enum';
 
-import { LoginTokensService } from '../login-tokens/login-tokens.service'; 
-import { MailService } from '../mail/mail.service'; 
+import { LoginTokensService } from '../login-tokens/login-tokens.service';
+import { MailService } from '../mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -27,11 +27,11 @@ export class PaymentsService {
 
     private readonly companiesService: CompaniesService,
 
-    private readonly loginTokensService: LoginTokensService, 
-    
-    private readonly mailService: MailService,               
-    
-    private readonly configService: ConfigService,           
+    private readonly loginTokensService: LoginTokensService,
+
+    private readonly mailService: MailService,
+
+    private readonly configService: ConfigService,
   ) {}
 
   // =========================
@@ -41,25 +41,18 @@ export class PaymentsService {
   // DocumentsService.findAll()).
   // =========================
   async findAll() {
-
     const payments = await this.paymentRepository.find();
 
-    const companyIds = [
-      ...new Set(payments.map(p => p.companyId)),
-    ];
+    const companyIds = [...new Set(payments.map((p) => p.companyId))];
 
-    const companies =
-      await this.companiesService.findNamesByIds(companyIds);
+    const companies = await this.companiesService.findNamesByIds(companyIds);
 
-    const companyMap = new Map(
-      companies.map(c => [c.id, c.companyName]),
-    );
+    const companyMap = new Map(companies.map((c) => [c.id, c.companyName]));
 
-    return payments.map(payment => ({
+    return payments.map((payment) => ({
       ...payment,
       companyName: companyMap.get(payment.companyId),
     }));
-
   }
 
   // =========================
@@ -85,11 +78,13 @@ export class PaymentsService {
   // ACTIVE) — a aprovação do pagamento é
   // independente da aprovação da empresa pelo
   // aprovador. Só bloqueia empresa já INACTIVE.
+  //
+  // Dispara o e-mail com o link de continuação
+  // assim que a pessoa clica em "Já fiz o
+  // pagamento" (não espera o colaborador validar).
   // =========================
   async create(data: CreatePaymentDto) {
-    const company = await this.companiesService.findOne(
-      data.companyId,
-    );
+    const company = await this.companiesService.findOne(data.companyId);
 
     if (company.status === CompanyStatus.INACTIVE) {
       throw new BadRequestException(
@@ -98,9 +93,7 @@ export class PaymentsService {
     }
 
     if (data.amount <= 0) {
-      throw new BadRequestException(
-        'O valor deve ser maior que zero',
-      );
+      throw new BadRequestException('O valor deve ser maior que zero');
     }
 
     const payment = this.paymentRepository.create({
@@ -108,7 +101,26 @@ export class PaymentsService {
       status: PaymentStatus.PENDING,
     });
 
-    return this.paymentRepository.save(payment);
+    const saved = await this.paymentRepository.save(payment);
+
+    try {
+      const loginToken = await this.loginTokensService.createToken(company.id);
+
+      const frontendUrl =
+        this.configService.get<string>('FRONTEND_URL') ||
+        'http://localhost:5173';
+      const url = `${frontendUrl}/cadastro/complete/${loginToken.token}`;
+
+      await this.mailService.sendRegistrationLinkEmail(
+        company.email,
+        company.companyName,
+        url,
+      );
+    } catch (error) {
+      console.error('Erro ao enviar e-mail de continuação de cadastro:', error);
+    }
+
+    return saved;
   }
 
   // =========================
@@ -123,19 +135,11 @@ export class PaymentsService {
       );
     }
 
-    if (
-      data.amount !== undefined &&
-      data.amount <= 0
-    ) {
-      throw new BadRequestException(
-        'O valor deve ser maior que zero',
-      );
+    if (data.amount !== undefined && data.amount <= 0) {
+      throw new BadRequestException('O valor deve ser maior que zero');
     }
 
-    const updated = this.paymentRepository.merge(
-      payment,
-      data,
-    );
+    const updated = this.paymentRepository.merge(payment, data);
 
     return this.paymentRepository.save(updated);
   }
@@ -161,32 +165,20 @@ export class PaymentsService {
   // PAY
   // =========================
   async pay(id: number) {
-  const payment = await this.findOne(id);
+    const payment = await this.findOne(id);
 
-  if (payment.status !== PaymentStatus.APPROVED) {
-    throw new BadRequestException('Somente pagamentos APPROVED podem ser pagos');
+    if (payment.status !== PaymentStatus.APPROVED) {
+      throw new BadRequestException(
+        'Somente pagamentos APPROVED podem ser pagos',
+      );
+    }
+
+    payment.status = PaymentStatus.PAID;
+    payment.paidAt = new Date();
+
+    return this.paymentRepository.save(payment);
   }
 
-  payment.status = PaymentStatus.PAID;
-  payment.paidAt = new Date();
-
-  const saved = await this.paymentRepository.save(payment);
-
-  const company = await this.companiesService.findOne(payment.companyId);
-  const loginToken = await this.loginTokensService.createToken(company.id);
-
-  const frontendUrl = this.configService.get<string>('FRONTEND_URL')
-    || 'http://localhost:5173';
-  const url = `${frontendUrl}/cadastro/complete/${loginToken.token}`;
-
-  await this.mailService.sendRegistrationLinkEmail(
-    company.email,
-    company.companyName,
-    url,
-  );
-
-  return saved;
-}
   // =========================
   // CANCEL
   // =========================
@@ -194,9 +186,7 @@ export class PaymentsService {
     const payment = await this.findOne(id);
 
     if (payment.status === PaymentStatus.PAID) {
-      throw new BadRequestException(
-        'Pagamento já pago não pode ser cancelado',
-      );
+      throw new BadRequestException('Pagamento já pago não pode ser cancelado');
     }
 
     payment.status = PaymentStatus.CANCELLED;
@@ -211,9 +201,7 @@ export class PaymentsService {
     const payment = await this.findOne(id);
 
     if (payment.status === PaymentStatus.PAID) {
-      throw new BadRequestException(
-        'Pagamento pago não pode ser removido',
-      );
+      throw new BadRequestException('Pagamento pago não pode ser removido');
     }
 
     await this.paymentRepository.delete(id);

@@ -38,22 +38,15 @@ export class DocumentsService {
   // =========================
 
   async findAll() {
-
     const documents = await this.repo.find();
 
-    const companyIds = [
-      ...new Set(documents.map(doc => doc.companyId)),
-    ];
+    const companyIds = [...new Set(documents.map((doc) => doc.companyId))];
 
-    const companies =
-      await this.companiesService.findNamesByIds(companyIds);
+    const companies = await this.companiesService.findNamesByIds(companyIds);
 
-    const companyMap = new Map(
-      companies.map(c => [c.id, c]),
-    );
+    const companyMap = new Map(companies.map((c) => [c.id, c]));
 
-    return documents.map(doc => {
-
+    return documents.map((doc) => {
       const company = companyMap.get(doc.companyId);
 
       return {
@@ -61,15 +54,22 @@ export class DocumentsService {
         companyName: company?.companyName,
         establishmentType: company?.establishmentType,
       };
-
     });
-
   }
 
   findByCompany(companyId: number) {
     return this.repo.find({
       where: { companyId },
-      select: ['id', 'companyId', 'documentType', 'fileName', 'mimeType', 'fileSize', 'status', 'uploadedAt'],
+      select: [
+        'id',
+        'companyId',
+        'documentType',
+        'fileName',
+        'mimeType',
+        'fileSize',
+        'status',
+        'uploadedAt',
+      ],
     });
   }
 
@@ -83,9 +83,7 @@ export class DocumentsService {
     });
 
     if (!doc) {
-      throw new NotFoundException(
-        'Documento não encontrado',
-      );
+      throw new NotFoundException('Documento não encontrado');
     }
 
     return doc;
@@ -104,15 +102,9 @@ export class DocumentsService {
     },
     user?: any,
   ) {
+    const company = await this.companiesService.findOne(data.companyId);
 
-    const company =
-      await this.companiesService.findOne(
-        data.companyId,
-      );
-
-    if (
-      company.status === CompanyStatus.INACTIVE
-    ) {
+    if (company.status === CompanyStatus.INACTIVE) {
       throw new BadRequestException(
         'Empresa inativa não pode enviar documentos.',
       );
@@ -147,60 +139,36 @@ export class DocumentsService {
     data: UpdateDocumentDto,
     file?: Express.Multer.File,
   ) {
-
-    const doc =
-      await this.findOne(id);
+    const doc = await this.findOne(id);
 
     if (file) {
+      doc.fileName = file.originalname;
 
-      doc.fileName =
-        file.originalname;
+      doc.mimeType = file.mimetype;
 
-      doc.mimeType =
-        file.mimetype;
+      doc.fileSize = file.size;
 
-      doc.fileSize =
-        file.size;
-
-      doc.fileContent =
-        file.buffer;
-
+      doc.fileContent = file.buffer;
     }
 
-    const updated =
-      this.repo.merge(
-        doc,
-        data,
-      );
+    const updated = this.repo.merge(doc, data);
 
     return this.repo.save(updated);
-
   }
 
   // =========================
   // DOWNLOAD
   // =========================
 
-  async download(
-    id: number,
-  ): Promise<StreamableFile> {
+  async download(id: number): Promise<StreamableFile> {
+    const document = await this.findOne(id);
 
-    const document =
-      await this.findOne(id);
+    const stream = Readable.from(document.fileContent);
 
-    const stream =
-      Readable.from(
-        document.fileContent,
-      );
-
-    return new StreamableFile(
-      stream,
-      {
-        type: document.mimeType,
-        disposition: `inline; filename="${document.fileName}"`,
-      },
-    );
-
+    return new StreamableFile(stream, {
+      type: document.mimeType,
+      disposition: `inline; filename="${document.fileName}"`,
+    });
   }
 
   // =========================
@@ -208,16 +176,12 @@ export class DocumentsService {
   // =========================
 
   async remove(id: number) {
-
     await this.findOne(id);
 
     await this.repo.delete(id);
 
     return {
-      message:
-        'Documento removido com sucesso',
+      message: 'Documento removido com sucesso',
     };
-
   }
-
 }

@@ -4,15 +4,10 @@ import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 
 @Injectable()
 export class DevService implements TypeOrmOptionsFactory {
-
-  constructor(
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly configService: ConfigService) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
-
     return {
-
       type: 'postgres',
 
       host: this.configService.get<string>('DATABASE_HOST'),
@@ -32,9 +27,6 @@ export class DevService implements TypeOrmOptionsFactory {
       // conveniente localmente, mas NUNCA deve ser usado
       // em produção (pode alterar ou apagar dados sem aviso).
       synchronize: true,
-
     };
-
   }
-
 }

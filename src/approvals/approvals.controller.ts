@@ -21,21 +21,13 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/user-role.enum';
 
-
 @ApiTags('Approvals')
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(
-  UserRole.COLABORADOR_ADMIN,
-  UserRole.COLABORADOR_APROVADOR,
-)
+@Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
 @Controller('approvals')
 export class ApprovalsController {
-
-  constructor(
-    private readonly approvalsService: ApprovalsService,
-  ) {}
-
+  constructor(private readonly approvalsService: ApprovalsService) {}
 
   // =========================
   // LISTAR HISTÓRICO COMPLETO
@@ -51,7 +43,6 @@ export class ApprovalsController {
   findAll() {
     return this.approvalsService.findAll();
   }
-
 
   // =========================
   // BUSCAR POR ID
@@ -79,7 +70,6 @@ export class ApprovalsController {
     return this.approvalsService.findOne(id);
   }
 
-
   // =========================
   // LISTAR HISTÓRICO POR EMPRESA
   // =========================
@@ -101,5 +91,4 @@ export class ApprovalsController {
   ) {
     return this.approvalsService.findByCompany(companyId);
   }
-
 }

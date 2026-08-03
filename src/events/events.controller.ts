@@ -9,11 +9,7 @@ import {
   ParseIntPipe,
 } from '@nestjs/common';
 
-import {
-  ApiTags,
-  ApiOperation,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger';
 
 import { EventsService } from './events.service';
 import { CreateEventDto } from './dto/create-event.dto';
@@ -45,10 +41,7 @@ export class EventsController {
 
   @Patch(':id')
   @ApiOperation({ summary: 'Atualizar evento' })
-  update(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() body: UpdateEventDto,
-  ) {
+  update(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateEventDto) {
     return this.service.update(id, body);
   }
 

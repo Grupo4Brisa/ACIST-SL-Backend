@@ -58,8 +58,7 @@ export class TermsAcceptanceController {
   })
   @ApiResponse({
     status: 409,
-    description:
-      'A empresa já aceitou esta versão dos termos.',
+    description: 'A empresa já aceitou esta versão dos termos.',
   })
   create(
     @Body()
@@ -105,8 +104,7 @@ export class TermsAcceptanceController {
   })
   @ApiResponse({
     status: 200,
-    description:
-      'Documento enviado para assinatura.',
+    description: 'Documento enviado para assinatura.',
   })
   sendToSignature(
     @Param('id', ParseIntPipe)

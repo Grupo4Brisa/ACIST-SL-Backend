@@ -61,44 +61,46 @@ export class TermsAcceptanceService {
   }
 
   // =========================
-  // CRIAR ACEITE
+  // CRIAR OU ATUALIZAR ACEITE
   // =========================
   async create(data: CreateTermsAcceptanceDto) {
-    const exists = await this.termsRepository.findOne({
+    let acceptance = await this.termsRepository.findOne({
       where: {
         companyId: data.companyId,
         termVersion: data.termVersion,
       },
     });
 
-    if (exists) {
-      throw new ConflictException(
-        'Esta empresa já aceitou esta versão dos termos.',
-      );
+    if (acceptance) {
+      // já existia (ex: reenvio após reprovação) — atualiza
+      acceptance.accepted = data.accepted;
+      acceptance.acceptedAt = data.accepted ? new Date() : undefined;
+
+      await this.termsRepository.save(acceptance);
+    } else {
+      acceptance = this.termsRepository.create({
+        companyId: data.companyId,
+        accepted: data.accepted,
+        acceptedAt: data.accepted ? new Date() : undefined,
+        termVersion: data.termVersion,
+      });
+
+      await this.termsRepository.save(acceptance);
     }
-
-    const acceptance = this.termsRepository.create({
-      companyId: data.companyId,
-      accepted: data.accepted,
-      acceptedAt: data.accepted ? new Date() : undefined,
-      termVersion: data.termVersion,
-    });
-
-    await this.termsRepository.save(acceptance);
 
     // log: cadastro finalizado (8 etapas concluídas)
     await this.approvalsService.createLog({
       companyId: data.companyId,
-      userId:    undefined,
-      action:    ApprovalAction.FINALIZED,
+      userId: undefined,
+      action: ApprovalAction.FINALIZED,
       observation: `Cadastro finalizado — Termo de Adesão aceito (versão ${data.termVersion}).`,
     });
 
     // atualiza status da empresa para PENDING_APPROVAL
-    await this.companyRepository.update(
-      data.companyId,
-      { status: CompanyStatus.PENDING_APPROVAL },
-    );
+    // (funciona tanto pra primeiro envio quanto reenvio após reprovação)
+    await this.companyRepository.update(data.companyId, {
+      status: CompanyStatus.PENDING_APPROVAL,
+    });
 
     return acceptance;
   }
@@ -109,9 +111,7 @@ export class TermsAcceptanceService {
   async generatePdf(id: number) {
     const term = await this.findOne(id);
 
-    const filePath = await this.termsPdfService.generatePdf(
-      term.id,
-    );
+    const filePath = await this.termsPdfService.generatePdf(term.id);
 
     term.documentUrl = filePath;
 
@@ -138,51 +138,40 @@ export class TermsAcceptanceService {
     // =========================
     // 1. CRIAR DOCUMENTO
     // =========================
-    const document: any =
-      await this.clicksignService.createDocument(
-        term.documentUrl,
-        `terms-${term.id}.pdf`,
-      );
+    const document: any = await this.clicksignService.createDocument(
+      term.documentUrl,
+      `terms-${term.id}.pdf`,
+    );
 
     const documentKey = document.document?.key;
 
     if (!documentKey) {
-      throw new ConflictException(
-        'Erro ao criar documento na Clicksign.',
-      );
+      throw new ConflictException('Erro ao criar documento na Clicksign.');
     }
 
     // =========================
     // 2. CRIAR SIGNATÁRIO
     // =========================
-    const signer: any =
-      await this.clicksignService.createSigner(
-        `Empresa ${term.companyId}`,
-        `company${term.companyId}@email.com`,
-      );
+    const signer: any = await this.clicksignService.createSigner(
+      `Empresa ${term.companyId}`,
+      `company${term.companyId}@email.com`,
+    );
 
     const signerKey = signer.signer?.key;
 
     if (!signerKey) {
-      throw new ConflictException(
-        'Erro ao criar signatário.',
-      );
+      throw new ConflictException('Erro ao criar signatário.');
     }
 
     // =========================
     // 3. VINCULAR SIGNATÁRIO
     // =========================
-    await this.clicksignService.addSignerToDocument(
-      documentKey,
-      signerKey,
-    );
+    await this.clicksignService.addSignerToDocument(documentKey, signerKey);
 
     // =========================
     // 4. INICIAR ASSINATURA
     // =========================
-    await this.clicksignService.startSignature(
-      documentKey,
-    );
+    await this.clicksignService.startSignature(documentKey);
 
     // =========================
     // 5. SALVAR NO BANCO
@@ -193,8 +182,7 @@ export class TermsAcceptanceService {
     await this.termsRepository.save(term);
 
     return {
-      message:
-        'Documento enviado para assinatura com sucesso',
+      message: 'Documento enviado para assinatura com sucesso',
       documentKey,
       signerKey,
     };

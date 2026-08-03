@@ -40,9 +40,7 @@ export class TasksService {
     });
 
     if (!task) {
-      throw new NotFoundException(
-        'Tarefa não encontrada',
-      );
+      throw new NotFoundException('Tarefa não encontrada');
     }
 
     return task;
@@ -54,9 +52,7 @@ export class TasksService {
 
   async create(data: CreateTaskDto) {
     if (new Date(data.dueDate).getTime() < Date.now()) {
-      throw new BadRequestException(
-        'A data limite não pode estar no passado',
-      );
+      throw new BadRequestException('A data limite não pode estar no passado');
     }
 
     const task = this.repository.create({
@@ -71,25 +67,14 @@ export class TasksService {
   // UPDATE
   // =========================
 
-  async update(
-    id: number,
-    data: UpdateTaskDto,
-  ) {
+  async update(id: number, data: UpdateTaskDto) {
     const task = await this.findOne(id);
 
-    if (
-      data.dueDate &&
-      new Date(data.dueDate).getTime() < Date.now()
-    ) {
-      throw new BadRequestException(
-        'A data limite não pode estar no passado',
-      );
+    if (data.dueDate && new Date(data.dueDate).getTime() < Date.now()) {
+      throw new BadRequestException('A data limite não pode estar no passado');
     }
 
-    const updated = this.repository.merge(
-      task,
-      data,
-    );
+    const updated = this.repository.merge(task, data);
 
     return this.repository.save(updated);
   }

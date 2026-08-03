@@ -4,15 +4,10 @@ import { TypeOrmModuleOptions, TypeOrmOptionsFactory } from '@nestjs/typeorm';
 
 @Injectable()
 export class ProdService implements TypeOrmOptionsFactory {
-
-  constructor(
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly configService: ConfigService) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
-
     return {
-
       type: 'postgres',
 
       host: this.configService.get<string>('DATABASE_HOST'),
@@ -38,8 +33,7 @@ export class ProdService implements TypeOrmOptionsFactory {
       // REMOVA essa variável (ou coloque =false) e faça outro
       // deploy. Deixá-la true permanentemente é arriscado, porque
       // o synchronize pode alterar/apagar colunas sem aviso.
-      synchronize:
-        this.configService.get<string>('DATABASE_SYNC') === 'true',
+      synchronize: this.configService.get<string>('DATABASE_SYNC') === 'true',
 
       // A conexão externa do Render exige SSL. Se um dia você
       // conectar via rede interna (mesma região), pode desativar
@@ -48,9 +42,6 @@ export class ProdService implements TypeOrmOptionsFactory {
         this.configService.get<string>('DATABASE_SSL') === 'true'
           ? { rejectUnauthorized: false }
           : false,
-
     };
-
   }
-
 }

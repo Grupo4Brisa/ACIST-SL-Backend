@@ -45,9 +45,7 @@ export class EventsService {
     const eventDate = new Date(data.eventDate).getTime();
 
     if (eventDate < now) {
-      throw new BadRequestException(
-        'Data do evento não pode ser no passado',
-      );
+      throw new BadRequestException('Data do evento não pode ser no passado');
     }
 
     const event = this.repo.create({
@@ -71,9 +69,7 @@ export class EventsService {
       const newDate = new Date(data.eventDate).getTime();
 
       if (newDate < Date.now()) {
-        throw new BadRequestException(
-          'Data do evento não pode ser no passado',
-        );
+        throw new BadRequestException('Data do evento não pode ser no passado');
       }
     }
 

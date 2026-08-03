@@ -8,20 +8,13 @@ import {
 
 import { ConfigService } from '@nestjs/config';
 
-import {
-  InjectRepository,
-} from '@nestjs/typeorm';
+import { InjectRepository } from '@nestjs/typeorm';
 
-import {
-  Repository,
-  In,
-} from 'typeorm';
+import { Repository, In } from 'typeorm';
 
 import * as bcrypt from 'bcrypt';
 
-
 import { Company } from './entities/company.entity';
-
 
 import { CreateCompanyDto } from './dto/create-company.dto';
 import { CompleteCompanyDto } from './dto/complete-company.dto';
@@ -30,78 +23,37 @@ import { FilterCompanyDto } from './dto/filter-company.dto';
 
 import { MailService } from '../mail/mail.service';
 
+import { CompanyStatus } from './company-status.enum';
 
-import {
-  CompanyStatus,
-} from './company-status.enum';
+import { ApprovalsService } from '../approvals/approvals.service';
 
+import { ApprovalAction } from '../approvals/approval-action.enum';
 
-import {
-  ApprovalsService,
-} from '../approvals/approvals.service';
-
-
-import {
-  ApprovalAction,
-} from '../approvals/approval-action.enum';
-
-
-import {
-  LoginTokensService,
-} from '../login-tokens/login-tokens.service';
-
-
+import { LoginTokensService } from '../login-tokens/login-tokens.service';
 
 @Injectable()
 export class CompaniesService {
-
-
   constructor(
-
-
     @InjectRepository(Company)
+    private readonly companyRepository: Repository<Company>,
 
-    private readonly companyRepository:
-      Repository<Company>,
+    private readonly approvalsService: ApprovalsService,
 
+    private readonly configService: ConfigService,
 
-
-    private readonly approvalsService:
-      ApprovalsService,
-
-
-
-    private readonly configService:
-      ConfigService,
-
-
-
-    private readonly loginTokensService:
-      LoginTokensService,
+    private readonly loginTokensService: LoginTokensService,
 
     private readonly mailService: MailService,
-
   ) {}
-
-
 
   // =====================================
   // LISTAR EMPRESAS
   // =====================================
 
-  async findAll(
-    filters: FilterCompanyDto,
-  ) {
+  async findAll(filters: FilterCompanyDto) {
+    const query = this.companyRepository.createQueryBuilder('company');
 
-
-    const query =
-      this.companyRepository
-        .createQueryBuilder('company');
-
-
-
-    if(filters.companyName){
-
+    if (filters.companyName) {
       query.andWhere(
         `
         (
@@ -111,116 +63,55 @@ export class CompaniesService {
         )
         `,
         {
-          companyName:
-            `%${filters.companyName}%`,
+          companyName: `%${filters.companyName}%`,
         },
       );
-
     }
 
-
-
-    if(filters.city){
-
-      query.andWhere(
-        'company.city ILIKE :city',
-        {
-          city:
-            `%${filters.city}%`,
-        },
-      );
-
+    if (filters.city) {
+      query.andWhere('company.city ILIKE :city', {
+        city: `%${filters.city}%`,
+      });
     }
 
-
-
-    if(filters.companySize){
-
-      query.andWhere(
-        'company.companySize = :companySize',
-        {
-          companySize:
-            filters.companySize,
-        },
-      );
-
+    if (filters.companySize) {
+      query.andWhere('company.companySize = :companySize', {
+        companySize: filters.companySize,
+      });
     }
 
-
-
-    if(filters.establishmentType){
-
-      query.andWhere(
-        'company.establishmentType ILIKE :establishmentType',
-        {
-          establishmentType:
-            `%${filters.establishmentType}%`,
-        },
-      );
-
+    if (filters.establishmentType) {
+      query.andWhere('company.establishmentType ILIKE :establishmentType', {
+        establishmentType: `%${filters.establishmentType}%`,
+      });
     }
 
-
-
-    if(filters.status){
-
-      query.andWhere(
-        'company.status = :status',
-        {
-          status:
-            filters.status,
-        },
-      );
-
+    if (filters.status) {
+      query.andWhere('company.status = :status', {
+        status: filters.status,
+      });
     }
-
-
 
     return query.getMany();
-
   }
-
-
-
-
 
   // =====================================
   // BUSCAR EMPRESA POR ID
   // =====================================
 
-  async findOne(
-    id:number,
-  ){
+  async findOne(id: number) {
+    const company = await this.companyRepository.findOne({
+      where: {
+        id,
+      },
+    });
 
-
-    const company =
-      await this.companyRepository.findOne({
-
-        where:{
-          id,
-        },
-
-      });
-
-
-
-    if(!company){
-
-      throw new NotFoundException(
-        'Empresa não encontrada.',
-      );
-
+    if (!company) {
+      throw new NotFoundException('Empresa não encontrada.');
     }
 
-
-
     return company;
-
   }
-
-
-
-
 
   // =====================================
   // BUSCAR NOMES/RAMO EM LOTE
@@ -230,207 +121,93 @@ export class CompaniesService {
   // sem fazer N+1 queries.
   // =====================================
 
-  async findNamesByIds(
-    ids: number[],
-  ){
-
-
-    if(ids.length === 0){
-
+  async findNamesByIds(ids: number[]) {
+    if (ids.length === 0) {
       return [];
-
     }
 
-
-
     return this.companyRepository.find({
-
-      where:{
+      where: {
         id: In(ids),
       },
 
-
-      select:[
-        'id',
-        'companyName',
-        'establishmentType',
-      ],
-
+      select: ['id', 'companyName', 'establishmentType'],
     });
-
-
   }
-
-
-
-
 
   // =====================================
   // LOGIN EMPRESA
   // =====================================
 
-  async findAuthCompanyByEmail(
-    email:string,
-  ){
+  async findAuthCompanyByEmail(email: string) {
+    const associateLogin = this.configService.get<boolean>(
+      'features.associateLogin',
+    );
 
-
-    const associateLogin =
-      this.configService.get<boolean>(
-        'features.associateLogin',
-      );
-
-
-
-    if(!associateLogin){
-
+    if (!associateLogin) {
       return null;
-
     }
 
-
-
     return this.companyRepository.findOne({
-
-      where:{
+      where: {
         email,
       },
 
-
-      select:[
-        'id',
-        'companyName',
-        'email',
-        'password',
-        'status',
-      ],
-
+      select: ['id', 'companyName', 'email', 'password', 'status'],
     });
-
-
   }
-    // =====================================
+  // =====================================
   // CADASTRO INICIAL LANDING
   // =====================================
 
-  async createLanding(
-    companyData: CreateCompanyDto,
-  ){
+  async createLanding(companyData: CreateCompanyDto) {
+    const exists = await this.companyRepository.findOne({
+      where: [
+        {
+          email: companyData.email,
+        },
 
+        {
+          cnpjcpf: companyData.cnpjcpf,
+        },
+      ],
+    });
 
-    const exists =
-      await this.companyRepository.findOne({
-
-        where:[
-
-          {
-            email:
-              companyData.email,
-          },
-
-          {
-            cnpjcpf:
-              companyData.cnpjcpf,
-          },
-
-        ],
-
-      });
-
-
-
-    if(exists){
-
-      throw new ConflictException(
-        'Email ou CNPJ/CPF já cadastrado.',
-      );
-
+    if (exists) {
+      throw new ConflictException('Email ou CNPJ/CPF já cadastrado.');
     }
 
+    let passwordHash: string | undefined;
 
+    const landingPassword = this.configService.get<boolean>(
+      'features.landingPassword',
+    );
 
-
-    let passwordHash:
-      string | undefined;
-
-
-
-    const landingPassword =
-      this.configService.get<boolean>(
-        'features.landingPassword',
-      );
-
-
-
-    if(
-      landingPassword &&
-      companyData.password
-    ){
-
-
-      passwordHash =
-        await bcrypt.hash(
-          companyData.password,
-          10,
-        );
-
-
+    if (landingPassword && companyData.password) {
+      passwordHash = await bcrypt.hash(companyData.password, 10);
     }
 
+    const company = this.companyRepository.create({
+      ...companyData,
 
+      password: passwordHash,
 
+      status: CompanyStatus.INCOMPLETE,
+    });
 
+    const saved = await this.companyRepository.save(company);
 
-    const company =
-      this.companyRepository.create({
-
-        ...companyData,
-
-
-        password:
-          passwordHash,
-
-
-        status:
-          CompanyStatus.INCOMPLETE,
-
-      });
-
-
-
-
-
-    const saved =
-      await this.companyRepository.save(
-        company,
-      );
-
-
-
-
-
-    const {
-      password,
-      ...companyWithoutPassword
-    } = saved;
+    const { password, ...companyWithoutPassword } = saved;
 
     await this.approvalsService.createLog({
       companyId: saved.id,
-      userId:    null,
-      action:    ApprovalAction.CREATED,
+      userId: null,
+      action: ApprovalAction.CREATED,
       observation: 'Cadastro iniciado pela landing page.',
     });
 
     return companyWithoutPassword;
-
-
   }
-
-
-
-
-
-
-
 
   // =====================================
   // COMPLETAR CADASTRO
@@ -438,23 +215,13 @@ export class CompaniesService {
   // =====================================
 
   async complete(
+    id: number,
 
-    id:number,
+    data: CompleteCompanyDto,
 
-    data:CompleteCompanyDto,
-
-    user:any,
-
-  ){
-
-
-
-    const company =
-      await this.findOne(id);
-
-
-
-
+    user: any,
+  ) {
+    const company = await this.findOne(id);
 
     /*
     =====================================
@@ -470,418 +237,133 @@ export class CompaniesService {
     =====================================
     */
 
-
-
-    if(
-
-      user?.type === 'COMPANY' &&
-
-      Number(user.id) !== Number(company.id)
-
-    ){
-
-
+    if (user?.type === 'COMPANY' && Number(user.id) !== Number(company.id)) {
       throw new UnauthorizedException(
-
         'Empresa não autorizada a alterar este cadastro.',
-
       );
-
-
     }
 
-
-
-
-
-
-
-    if(
-
+    if (
       company.status === CompanyStatus.ACTIVE ||
-
       company.status === CompanyStatus.INACTIVE
-
-    ){
-
-
+    ) {
       throw new BadRequestException(
-
         'Este cadastro não pode mais ser alterado.',
-
       );
-
-
     }
 
+    const updated = this.companyRepository.merge(
+      company,
 
+      {
+        ...data,
 
+        foundationDate: data.foundationDate
+          ? new Date(data.foundationDate)
+          : company.foundationDate,
 
+        associationDate: data.associationDate
+          ? new Date(data.associationDate)
+          : company.associationDate,
 
+        employeesCount:
+          data.employeesCount !== undefined
+            ? Number(data.employeesCount)
+            : company.employeesCount,
 
-
-
-    const updated =
-
-      this.companyRepository.merge(
-
-        company,
-
-        {
-
-
-
-          ...data,
-
-
-
-
-
-          foundationDate:
-
-            data.foundationDate
-
-              ? new Date(
-                  data.foundationDate,
-                )
-
-              : company.foundationDate,
-
-
-
-
-
-
-
-          associationDate:
-
-            data.associationDate
-
-              ? new Date(
-                  data.associationDate,
-                )
-
-              : company.associationDate,
-
-
-
-
-
-
-
-          employeesCount:
-
-            data.employeesCount !== undefined
-
-              ? Number(
-                  data.employeesCount,
-                )
-
-              : company.employeesCount,
-
-
-
-
-
-
-
-          status:
-
-            CompanyStatus.PENDING_APPROVAL,
-
-
-        },
-
-      );
-
-
-
-
-
-
-
-    const savedComplete = await this.companyRepository.save(
-
-      updated,
-
+        status: CompanyStatus.PENDING_APPROVAL,
+      },
     );
+
+    const savedComplete = await this.companyRepository.save(updated);
 
     await this.approvalsService.createLog({
       companyId: id,
-      userId:    user?.id ?? null,
-      action:    ApprovalAction.COMPLETED,
+      userId: user?.id ?? null,
+      action: ApprovalAction.COMPLETED,
       observation: 'Cadastro completado/atualizado.',
     });
 
     return savedComplete;
-
-
   }
-
-
-
-
-
-
-
-
-
-
-
 
   // =====================================
   // COMPLETAR CADASTRO POR TOKEN
   // =====================================
 
   async completeByToken(
+    token: string,
 
-    token:string,
+    data: CompleteCompanyDto,
+  ) {
+    const loginToken = await this.loginTokensService.findByToken(token);
 
-    data:CompleteCompanyDto,
-
-  ){
-
-
-
-    const loginToken =
-
-      await this.loginTokensService.findByToken(
-
-        token,
-
-      );
-
-
-
-
-
-    if(!loginToken){
-
-
-      throw new NotFoundException(
-
-        'Token inválido.',
-
-      );
-
-
+    if (!loginToken) {
+      throw new NotFoundException('Token inválido.');
     }
 
-
-
-
-
-
-
-    if(loginToken.used){
-
-
-      throw new BadRequestException(
-
-        'Token já utilizado.',
-
-      );
-
-
+    if (loginToken.used) {
+      throw new BadRequestException('Token já utilizado.');
     }
 
-
-
-
-
-
-
-    if(
-
-      loginToken.expiresAt < new Date()
-
-    ){
-
-
-      throw new BadRequestException(
-
-        'Token expirado.',
-
-      );
-
-
+    if (loginToken.expiresAt < new Date()) {
+      throw new BadRequestException('Token expirado.');
     }
 
+    const company = await this.complete(
+      loginToken.companyId,
 
+      data,
 
+      {
+        type: 'TOKEN',
 
-
-
-
-    const company =
-
-      await this.complete(
-
-        loginToken.companyId,
-
-        data,
-
-        {
-
-          type:'TOKEN',
-
-          id:loginToken.companyId,
-
-        },
-
-      );
-
-
-
-
-
-
-
-    await this.loginTokensService.markAsUsed(
-
-      token,
-
+        id: loginToken.companyId,
+      },
     );
 
-
-
-
-
-
+    await this.loginTokensService.markAsUsed(token);
 
     return company;
-
-
   }
-    // =====================================
+  // =====================================
   // APROVAR EMPRESA
   // SOMENTE COLABORADOR APROVADOR
   // =====================================
 
   async approve(
+    companyId: number,
 
-    companyId:number,
+    userId: number,
+  ) {
+    const company = await this.findOne(companyId);
 
-    userId:number,
-
-  ){
-
-
-
-    const company =
-
-      await this.findOne(
-
-        companyId,
-
-      );
-
-
-
-
-
-
-
-    if(
-
-      company.status !==
-
-      CompanyStatus.PENDING_APPROVAL
-
-    ){
-
-
-      throw new BadRequestException(
-
-        'Empresa não está aguardando aprovação.',
-
-      );
-
-
+    if (company.status !== CompanyStatus.PENDING_APPROVAL) {
+      throw new BadRequestException('Empresa não está aguardando aprovação.');
     }
 
+    company.status = CompanyStatus.ACTIVE;
 
-
-
-
-
-
-
-    company.status =
-
-      CompanyStatus.ACTIVE;
-
-
-
-
-
-
-
-
-    await this.companyRepository.save(
-
-      company,
-
-    );
-
-
-
-
-
-
-
-
+    await this.companyRepository.save(company);
 
     await this.approvalsService.createLog({
-
-
-
       companyId,
-
-
 
       userId,
 
+      action: ApprovalAction.APPROVED,
 
-
-      action:
-
-        ApprovalAction.APPROVED,
-
-
-
-
-
-      observation:
-
-        'Empresa aprovada pelo aprovador.',
-
-
-
+      observation: 'Empresa aprovada pelo aprovador.',
     });
 
     await this.mailService.sendApprovalEmail(
-    company.email,
-    company.companyName,
-  );
+      company.email,
+      company.companyName,
+    );
 
-
-
-    const associateLogin =
-
-      this.configService.get<boolean>(
-
-        'features.associateLogin',
-
-      );
-
-
-
-
-
-
-
-
+    const associateLogin = this.configService.get<boolean>(
+      'features.associateLogin',
+    );
 
     /*
     =====================================
@@ -892,71 +374,20 @@ export class CompaniesService {
     =====================================
     */
 
-
-
-    if(!associateLogin){
-
-
-
-      const loginToken =
-
-        await this.loginTokensService.createToken(
-
-          company.id,
-
-        );
-
-
-
-
-
-
+    if (!associateLogin) {
+      const loginToken = await this.loginTokensService.createToken(company.id);
 
       return {
-
-
         company,
 
+        completionToken: loginToken.token,
 
-
-        completionToken:
-
-          loginToken.token,
-
-
-
-        expiresAt:
-
-          loginToken.expiresAt,
-
-
+        expiresAt: loginToken.expiresAt,
       };
-
-
     }
 
-
-
-
-
-
-
     return company;
-
-
   }
-
-
-
-
-
-
-
-
-
-
-
-
 
   // =====================================
   // REPROVAR EMPRESA
@@ -964,149 +395,45 @@ export class CompaniesService {
   // =====================================
 
   async reject(
+    companyId: number,
 
-    companyId:number,
+    userId: number,
+  ) {
+    const company = await this.findOne(companyId);
 
-    userId:number,
-
-  ){
-
-
-
-    const company =
-
-      await this.findOne(
-
-        companyId,
-
-      );
-
-
-
-
-
-
-
-    if(
-
-      company.status !==
-
-      CompanyStatus.PENDING_APPROVAL
-
-    ){
-
-
-      throw new BadRequestException(
-
-        'Empresa não está aguardando aprovação.',
-
-      );
-
-
+    if (company.status !== CompanyStatus.PENDING_APPROVAL) {
+      throw new BadRequestException('Empresa não está aguardando aprovação.');
     }
 
+    company.status = CompanyStatus.INACTIVE;
 
-
-
-
-
-
-
-    company.status =
-
-      CompanyStatus.INACTIVE;
-
-
-
-
-
-
-
-
-    await this.companyRepository.save(
-
-      company,
-
-    );
-
-
-
-
-
-
-
-
+    await this.companyRepository.save(company);
 
     await this.approvalsService.createLog({
-
-
-
       companyId,
-
-
 
       userId,
 
+      action: ApprovalAction.REJECTED,
 
-
-      action:
-
-        ApprovalAction.REJECTED,
-
-
-
-
-
-      observation:
-
-        'Empresa rejeitada pelo aprovador.',
-
-
-
+      observation: 'Empresa rejeitada pelo aprovador.',
     });
 
-
-
-
-
-
-
-
-
     return company;
-
-
   }
-    // =====================================
+  // =====================================
   // ATUALIZAR EMPRESA
   // EMPRESA OU COLABORADOR
   // =====================================
 
   async update(
+    id: number,
 
-    id:number,
+    data: UpdateCompanyDto,
 
-    data:UpdateCompanyDto,
-
-    user?:any,
-
-  ){
-
-
-
-    const company =
-
-      await this.findOne(
-
-        id,
-
-      );
-
-
-
-
-
-
+    user?: any,
+  ) {
+    const company = await this.findOne(id);
 
     /*
     =====================================
@@ -1121,32 +448,11 @@ export class CompaniesService {
     =====================================
     */
 
-
-
-    if(
-
-      user?.type === 'COMPANY' &&
-
-      Number(user.id) !== Number(company.id)
-
-    ){
-
-
+    if (user?.type === 'COMPANY' && Number(user.id) !== Number(company.id)) {
       throw new UnauthorizedException(
-
         'Empresa não autorizada a alterar este cadastro.',
-
       );
-
-
     }
-
-
-
-
-
-
-
 
     /*
     =====================================
@@ -1154,39 +460,17 @@ export class CompaniesService {
     =====================================
     */
 
-
-    if(data.password){
-
-
-
+    if (data.password) {
       data = {
-
-
         ...data,
 
+        password: await bcrypt.hash(
+          data.password,
 
-        password:
-
-          await bcrypt.hash(
-
-            data.password,
-
-            10,
-
-          ),
-
-
+          10,
+        ),
       };
-
-
     }
-
-
-
-
-
-
-
 
     /*
     =====================================
@@ -1203,72 +487,73 @@ export class CompaniesService {
     =====================================
     */
 
-
     delete data.status;
-
-
-
-
-
-
-
 
     // Captura valores ANTES do merge
     const snapshot: Record<string, any> = {};
-    const trackedFieldsList = ['companyName','corporateName','cnpjcpf','email','phone','companySize','stateRegistration','address','neighborhood','city','state','zipCode','website','establishmentType','headquartersType','employeesCount','foundationDate','origin','originDetail','eventPresentation'];
+    const trackedFieldsList = [
+      'companyName',
+      'corporateName',
+      'cnpjcpf',
+      'email',
+      'phone',
+      'companySize',
+      'stateRegistration',
+      'address',
+      'neighborhood',
+      'city',
+      'state',
+      'zipCode',
+      'website',
+      'establishmentType',
+      'headquartersType',
+      'employeesCount',
+      'foundationDate',
+      'origin',
+      'originDetail',
+      'eventPresentation',
+    ];
     for (const f of trackedFieldsList) snapshot[f] = (company as any)[f];
 
-    const updated =
+    const updated = this.companyRepository.merge(
+      company,
 
-      this.companyRepository.merge(
-
-        company,
-
-        data,
-
-      );
-
-
-
-
-
-
-
-
-    const savedUpdate = await this.companyRepository.save(
-
-      updated,
-
+      data,
     );
+
+    const savedUpdate = await this.companyRepository.save(updated);
 
     // Captura diferenças entre estado anterior e novo
     const fieldLabels: Record<string, string> = {
-          "companyName": "Nome Fantasia",
-          "corporateName": "Razão Social",
-          "cnpjcpf": "CNPJ/CPF",
-          "email": "Email",
-          "phone": "Telefone",
-          "companySize": "Porte",
-          "stateRegistration": "Inscrição Estadual",
-          "address": "Endereço",
-          "neighborhood": "Bairro",
-          "city": "Cidade",
-          "state": "Estado",
-          "zipCode": "CEP",
-          "website": "Site",
-          "establishmentType": "Tipo de Estabelecimento",
-          "headquartersType": "Tipo de Sede",
-          "employeesCount": "Nº de Funcionários",
-          "foundationDate": "Data de Fundação",
-          "origin": "Como Conheceu",
-          "originDetail": "Detalhe da Origem",
-          "eventPresentation": "Apresentação para Eventos"
+      companyName: 'Nome Fantasia',
+      corporateName: 'Razão Social',
+      cnpjcpf: 'CNPJ/CPF',
+      email: 'Email',
+      phone: 'Telefone',
+      companySize: 'Porte',
+      stateRegistration: 'Inscrição Estadual',
+      address: 'Endereço',
+      neighborhood: 'Bairro',
+      city: 'Cidade',
+      state: 'Estado',
+      zipCode: 'CEP',
+      website: 'Site',
+      establishmentType: 'Tipo de Estabelecimento',
+      headquartersType: 'Tipo de Sede',
+      employeesCount: 'Nº de Funcionários',
+      foundationDate: 'Data de Fundação',
+      origin: 'Como Conheceu',
+      originDetail: 'Detalhe da Origem',
+      eventPresentation: 'Apresentação para Eventos',
     };
     const diffs: string[] = [];
     for (const field of trackedFieldsList) {
       const oldVal = snapshot[field];
       const newVal = (data as any)[field];
-      if (newVal !== undefined && String(newVal ?? '') !== String(oldVal ?? '')) {
+      if (
+        newVal !== undefined &&
+        String(newVal ?? '') !== String(oldVal ?? '')
+      ) {
         const label = fieldLabels[field] || field;
         diffs.push(`${label}: "${oldVal ?? '-'}" → "${newVal ?? '-'}"`);
       }
@@ -1280,78 +565,27 @@ export class CompaniesService {
     if (diffText) {
       await this.approvalsService.createLog({
         companyId: id,
-        userId:    isColaborador ? (user?.id ?? undefined) : undefined,
-        action:    ApprovalAction.COMPLETED,
+        userId: isColaborador ? (user?.id ?? undefined) : undefined,
+        action: ApprovalAction.COMPLETED,
         observation: `${who} editou: ${diffText}`,
       });
     }
 
     return savedUpdate;
-
-
   }
-
-
-
-
-
-
-
-
-
-
-
 
   // =====================================
   // REMOVER EMPRESA
   // SOMENTE ADMIN/APROVADOR
   // =====================================
 
+  async remove(id: number) {
+    await this.findOne(id);
 
-  async remove(
-
-    id:number,
-
-  ){
-
-
-
-    await this.findOne(
-
-      id,
-
-    );
-
-
-
-
-
-
-
-    await this.companyRepository.delete(
-
-      id,
-
-    );
-
-
-
-
-
-
+    await this.companyRepository.delete(id);
 
     return {
-
-
-      message:
-
-        'Empresa removida com sucesso.',
-
-
+      message: 'Empresa removida com sucesso.',
     };
-
-
   }
-
-
 }

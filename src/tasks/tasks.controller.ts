@@ -9,11 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 
-import {
-  ApiOperation,
-  ApiParam,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 
 import { TasksService } from './tasks.service';
 
@@ -23,9 +19,7 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 @ApiTags('Tasks')
 @Controller('tasks')
 export class TasksController {
-  constructor(
-    private readonly tasksService: TasksService,
-  ) {}
+  constructor(private readonly tasksService: TasksService) {}
 
   @Get()
   @ApiOperation({ summary: 'Listar todas as tarefas' })
