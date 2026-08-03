@@ -103,8 +103,7 @@ export class CompaniesController {
   // =====================================
 
   @Get(':id')
-  @ApiBearerAuth('access-token')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
     summary: 'Buscar empresa por ID',
   })
@@ -116,8 +115,11 @@ export class CompaniesController {
   findOne(
     @Param('id', ParseIntPipe)
     id: number,
+
+    @Req()
+    req,
   ) {
-    return this.companiesService.findOne(id);
+    return this.companiesService.findOne(id, req.user);
   }
 
   // =====================================

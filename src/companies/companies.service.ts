@@ -99,7 +99,7 @@ export class CompaniesService {
   // BUSCAR EMPRESA POR ID
   // =====================================
 
-  async findOne(id: number) {
+  async findOne(id: number, user?: any) {
     const company = await this.companyRepository.findOne({
       where: {
         id,
@@ -109,6 +109,15 @@ export class CompaniesService {
     if (!company) {
       throw new NotFoundException('Empresa não encontrada.');
     }
+
+    // Sem JWT: retorna apenas campos necessários para o fluxo de cadastro público
+    if (!user) {
+      const { password, ...pub } = company;
+      return pub;
+    }
+
+    return company;
+  }
 
     return company;
   }
@@ -126,9 +135,20 @@ export class CompaniesService {
   // =====================================
 
   async findByToken(token: string) {
-    const { companyId } = await this.loginTokensService.validateToken(token);
+    // Usa findByToken (sem checar used/expirado) para que o associado
+    // consiga recarregar os dados mesmo retornando ao link mais de uma vez.
+    // A expiração ainda é verificada manualmente abaixo.
+    const loginToken = await this.loginTokensService.findByToken(token);
 
-    const company = await this.findOne(companyId);
+    if (!loginToken) {
+      throw new NotFoundException('Token inválido.');
+    }
+
+    if (loginToken.expiresAt < new Date()) {
+      throw new BadRequestException('Token expirado.');
+    }
+
+    const company = await this.findOne(loginToken.companyId);
 
     const { password, ...companyWithoutPassword } = company;
 
