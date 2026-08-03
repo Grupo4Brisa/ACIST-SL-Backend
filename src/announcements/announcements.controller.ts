@@ -12,8 +12,7 @@ import {
 import { AnnouncementsService } from './announcements.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
 import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
-
-import {ApiTags, ApiOperation, ApiResponse} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 @ApiTags('Announcements')
 @Controller('announcements')
@@ -28,9 +27,15 @@ export class AnnouncementsController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Listar todos os announcements ativos' })
+  @ApiOperation({ summary: 'Listar announcements ativos (publico)' })
   findAll() {
     return this.announcementsService.findAll();
+  }
+
+  @Get('admin/all')
+  @ApiOperation({ summary: 'Listar todos os announcements (admin)' })
+  findAllAdmin() {
+    return this.announcementsService.findAllAdmin();
   }
 
   @Get(':id')
@@ -47,6 +52,7 @@ export class AnnouncementsController {
   ) {
     return this.announcementsService.update(id, updateAnnouncementDto);
   }
+
 
   @Delete(':id')
   @ApiOperation({ summary: 'Desativar announcement (soft delete)' })

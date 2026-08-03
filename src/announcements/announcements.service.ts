@@ -26,35 +26,28 @@ export class AnnouncementsService {
     });
   }
 
-  async findOne(id: number) {
-    const announcement = await this.announcementsRepository.findOne({
-      where: { id },
+  findAllAdmin() {
+    return this.announcementsRepository.find({
+      order: { createdAt: 'DESC' },
     });
+  }
 
-    if (!announcement) {
-      throw new NotFoundException('Announcement não encontrado');
-    }
-
+  async findOne(id: number) {
+    const announcement = await this.announcementsRepository.findOne({ where: { id } });
+    if (!announcement) throw new NotFoundException('Announcement não encontrado');
     return announcement;
   }
 
   async update(id: number, dto: UpdateAnnouncementDto) {
     const announcement = await this.findOne(id);
-
     Object.assign(announcement, dto);
-
     return this.announcementsRepository.save(announcement);
   }
 
   async remove(id: number) {
     await this.findOne(id);
-
-    await this.announcementsRepository.update(id, {
-      active: false,
-    });
-
-    return {
-      message: 'Aviso removido com sucesso',
-    };
+    await this.announcementsRepository.update(id, { active: false });
+    return { message: 'Aviso removido com sucesso' };
   }
+
 }

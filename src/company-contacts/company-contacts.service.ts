@@ -19,59 +19,34 @@ export class CompanyContactsService {
     private readonly approvalsService: ApprovalsService,
   ) {}
 
-  // =====================================
-  // LISTAR TODOS OS CONTATOS
-  // =====================================
-
   findAll() {
     return this.companyContactRepository.find();
   }
 
-  // =====================================
-  // LISTAR CONTATOS POR EMPRESA
-  // =====================================
-
   findByCompany(companyId: number) {
     return this.companyContactRepository.find({
-      where: {
-        companyId,
-      },
-
-      order: {
-        id: 'ASC',
-      },
+      where: { companyId },
+      order: { id: 'ASC' },
     });
   }
 
-  // =====================================
-  // CRIAR UM CONTATO
-  // =====================================
-
   async create(contactData: CreateCompanyContactDto) {
     const contact = this.companyContactRepository.create(contactData);
-
     return this.companyContactRepository.save(contact);
   }
 
-  // =====================================
-  // CRIAR VÁRIOS CONTATOS
-  // USADO NO CADASTRO DA EMPRESA
-  // =====================================
-
-  async createMany(
-    contacts: CreateCompanyContactDto[],
-    userId?: number | null,
-  ) {
+  async createMany(contacts: CreateCompanyContactDto[], user?: any) {
     const entities = this.companyContactRepository.create(contacts);
-
     const saved = await this.companyContactRepository.save(entities);
-    if (contacts.length > 0) {
-      const names = contacts.map((c) => c.name).join(', ');
+
+    const changed = contacts.length > 0 && (contacts[0] as any).changed !== false;
+    if (contacts.length > 0 && changed) {
+      const names = contacts.map(c => c.name).join(', ');
       await this.approvalsService.createLog({
         companyId: contacts[0].companyId,
-        userId: userId ?? null,
+        userId: (user?.type === 'USER' && user?.role) ? (user?.id ?? undefined) : undefined,
         action: ApprovalAction.COMPLETED,
-        observation: `Contatos atualizados: ${names}`,
+        observation: `${(user?.type === 'USER' && user?.role) ? 'Colaborador' : 'Sistema'} atualizou Contatos: ${names}`,
       });
     }
     return saved;
