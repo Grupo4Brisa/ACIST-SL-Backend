@@ -119,7 +119,13 @@ export class CompaniesController {
     @Req()
     req,
   ) {
-    return this.companiesService.findOne(id, req.user);
+    return this.companiesService.findOne(id).then((company) => {
+      if (!req.user) {
+        const { password, ...pub } = company;
+        return pub;
+      }
+      return company;
+    });
   }
 
   // =====================================
@@ -372,3 +378,19 @@ export class CompaniesController {
     return this.companiesService.remove(id);
   }
 }
+
+  findOne(
+    @Param('id', ParseIntPipe)
+    id: number,
+
+    @Req()
+    req,
+  ) {
+    return this.companiesService.findOne(id).then((company) => {
+      if (!req.user) {
+        const { password, ...pub } = company;
+        return pub;
+      }
+      return company;
+    });
+  }

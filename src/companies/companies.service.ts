@@ -99,7 +99,7 @@ export class CompaniesService {
   // BUSCAR EMPRESA POR ID
   // =====================================
 
-  async findOne(id: number, user?: any) {
+  async findOne(id: number) {
     const company = await this.companyRepository.findOne({
       where: {
         id,
@@ -109,6 +109,9 @@ export class CompaniesService {
     if (!company) {
       throw new NotFoundException('Empresa não encontrada.');
     }
+
+    return company;
+  }
 
     // Sem JWT: retorna apenas campos necessários para o fluxo de cadastro público
     if (!user) {
