@@ -114,6 +114,28 @@ export class CompaniesService {
   }
 
   // =====================================
+  // BUSCAR EMPRESA VIA TOKEN
+  // PÚBLICO — usado pela tela de "completar
+  // cadastro" (link enviado por e-mail),
+  // onde a empresa ainda não tem JWT.
+  //
+  // Não expõe busca por ID livre: só retorna
+  // dados se o token for válido, não usado e
+  // não expirado (mesma validação usada no
+  // completeByToken).
+  // =====================================
+
+  async findByToken(token: string) {
+    const { companyId } = await this.loginTokensService.validateToken(token);
+
+    const company = await this.findOne(companyId);
+
+    const { password, ...companyWithoutPassword } = company;
+
+    return companyWithoutPassword;
+  }
+
+  // =====================================
   // BUSCAR NOMES/RAMO EM LOTE
   // Usado pelo DocumentsService.findAll()
   // para enriquecer a lista de documentos

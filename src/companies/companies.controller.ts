@@ -65,6 +65,40 @@ export class CompaniesController {
   }
 
   // =====================================
+  // BUSCAR EMPRESA VIA TOKEN
+  // PÚBLICO
+  //
+  // IMPORTANTE:
+  // Esta rota fica antes do GET ':id'
+  // para evitar conflito de rota — senão
+  // o Nest tentaria interpretar "complete"
+  // como um :id.
+  //
+  // Usada pela tela "Completar Cadastro"
+  // (link do e-mail) para pré-preencher o
+  // formulário sem exigir JWT — o acesso é
+  // controlado pela validade do token, não
+  // por autenticação de sessão.
+  // =====================================
+
+  @Get('complete/:token')
+  @ApiOperation({
+    summary:
+      'Buscar dados da empresa via token (para pré-preencher o cadastro)',
+  })
+  @ApiParam({
+    name: 'token',
+
+    example: '4af7d7d2-a640-4e6c-a53c-8d1b60b56d5d',
+  })
+  findByToken(
+    @Param('token')
+    token: string,
+  ) {
+    return this.companiesService.findByToken(token);
+  }
+
+  // =====================================
   // BUSCAR EMPRESA POR ID
   // =====================================
 
