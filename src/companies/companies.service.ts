@@ -116,8 +116,6 @@ export class CompaniesService {
       return pub;
     }
 
-    return company;
-  }
 
     return company;
   }
