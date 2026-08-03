@@ -377,20 +377,22 @@ export class CompaniesController {
   ) {
     return this.companiesService.remove(id);
   }
-}
 
-  findOne(
+  // =====================================
+  // REENVIAR LINK DE CADASTRO
+  // ADMIN OU APROVADOR
+  // =====================================
+
+  @Patch(':id/resend-registration-link')
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.COLABORADOR_ADMIN, UserRole.COLABORADOR_APROVADOR)
+  @ApiOperation({ summary: 'Gerar novo link de cadastro para o associado' })
+  @ApiParam({ name: 'id', example: 1 })
+  resendRegistrationLink(
     @Param('id', ParseIntPipe)
     id: number,
-
-    @Req()
-    req,
   ) {
-    return this.companiesService.findOne(id).then((company) => {
-      if (!req.user) {
-        const { password, ...pub } = company;
-        return pub;
-      }
-      return company;
-    });
+    return this.companiesService.resendRegistrationLink(id);
   }
+}

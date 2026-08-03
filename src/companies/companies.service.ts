@@ -113,16 +113,6 @@ export class CompaniesService {
     return company;
   }
 
-    // Sem JWT: retorna apenas campos necessários para o fluxo de cadastro público
-    if (!user) {
-      const { password, ...pub } = company;
-      return pub;
-    }
-
-
-    return company;
-  }
-
   // =====================================
   // BUSCAR EMPRESA VIA TOKEN
   // PÚBLICO — usado pela tela de "completar
@@ -630,5 +620,22 @@ export class CompaniesService {
     return {
       message: 'Empresa removida com sucesso.',
     };
+  }
+
+  // =====================================
+  // REENVIAR LINK DE CADASTRO
+  // Gera um novo token e retorna a URL
+  // =====================================
+  async resendRegistrationLink(id: number) {
+    const company = await this.findOne(id);
+
+    const loginToken = await this.loginTokensService.createToken(company.id);
+
+    const frontendUrl =
+      this.configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+
+    const url = `${frontendUrl}/cadastro/complete/${loginToken.token}`;
+
+    return { url, expiresAt: loginToken.expiresAt };
   }
 }
