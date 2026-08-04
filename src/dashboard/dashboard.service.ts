@@ -111,6 +111,24 @@ export class DashboardService {
 
     const t = timesRaw[0] || {};
 
+    // =============================================
+    // TENDÊNCIA DE CADASTROS — últimos 6 meses
+    // =============================================
+    const trendRaw = await this.companyRepository.manager.query(`
+      SELECT
+        TO_CHAR(DATE_TRUNC('month', "createdAt"), 'YYYY-MM') AS mes,
+        COUNT(*) AS total
+      FROM companies
+      WHERE "createdAt" >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+      GROUP BY DATE_TRUNC('month', "createdAt")
+      ORDER BY DATE_TRUNC('month', "createdAt")
+    `);
+
+    const trend = trendRaw.map((r: any) => ({
+      mes: new Date(r.mes + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+      cadastros: Number(r.total),
+    }));
+
     return {
       companies: {
         total: totalCompanies,
@@ -130,6 +148,7 @@ export class DashboardService {
         finalizedToApproved: Number(t.finalized_to_approved) || null,
         landingToApproved:   Number(t.landing_to_approved)   || null,
       },
+      trend,
     };
   }
 }
