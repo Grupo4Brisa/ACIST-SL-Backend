@@ -125,10 +125,10 @@ export class DashboardService {
       companySize: companiesBySize,
       origin: companiesByOrigin,
       avgTimes: {
-        landingToPayment:     this.formatHours(Number(t.landing_to_payment)),
-        paymentToFinalized:   this.formatHours(Number(t.payment_to_finalized)),
-        finalizedToApproved:  this.formatHours(Number(t.finalized_to_approved)),
-        landingToApproved:    this.formatHours(Number(t.landing_to_approved)),
+        landingToPayment:    Number(t.landing_to_payment)    || null,
+        paymentToFinalized:  Number(t.payment_to_finalized)  || null,
+        finalizedToApproved: Number(t.finalized_to_approved) || null,
+        landingToApproved:   Number(t.landing_to_approved)   || null,
       },
     };
   }
