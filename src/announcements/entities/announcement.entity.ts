@@ -22,6 +22,9 @@ export class Announcement {
   @Column({ default: true })
   active!: boolean;
 
+  @Column({ type: 'timestamp', nullable: true })
+  scheduledAt?: Date | null;
+
   @CreateDateColumn()
   createdAt!: Date;
 

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { LessThanOrEqual, IsNull, Or, Repository } from 'typeorm';
 
 import { Announcement } from './entities/announcement.entity';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
@@ -13,22 +13,29 @@ export class AnnouncementsService {
     private readonly announcementsRepository: Repository<Announcement>,
   ) {}
 
-  create(createAnnouncementDto: CreateAnnouncementDto) {
+  create(dto: CreateAnnouncementDto) {
     return this.announcementsRepository.save(
-      this.announcementsRepository.create(createAnnouncementDto),
+      this.announcementsRepository.create({
+        ...dto,
+        scheduledAt: dto.scheduledAt ? new Date(dto.scheduledAt) : null,
+      }),
     );
   }
 
   findAll() {
+    const now = new Date();
     return this.announcementsRepository.find({
-      where: { active: true },
+      where: {
+        active: true,
+        scheduledAt: Or(IsNull(), LessThanOrEqual(now)),
+      },
       order: { createdAt: 'DESC' },
     });
   }
 
   findAllAdmin() {
     return this.announcementsRepository.find({
-      order: { createdAt: 'DESC' },
+      order: { scheduledAt: 'ASC', createdAt: 'DESC' },
     });
   }
 
@@ -38,9 +45,14 @@ export class AnnouncementsService {
     return announcement;
   }
 
-  async update(id: number, dto: UpdateAnnouncementDto) {
+  async update(id: number, dto: UpdateAnnouncementDto & { scheduledAt?: string | null }) {
     const announcement = await this.findOne(id);
-    Object.assign(announcement, dto);
+    Object.assign(announcement, {
+      ...dto,
+      scheduledAt: dto.scheduledAt !== undefined
+        ? (dto.scheduledAt ? new Date(dto.scheduledAt) : null)
+        : announcement.scheduledAt,
+    });
     return this.announcementsRepository.save(announcement);
   }
 
@@ -49,5 +61,4 @@ export class AnnouncementsService {
     await this.announcementsRepository.update(id, { active: false });
     return { message: 'Aviso removido com sucesso' };
   }
-
 }
