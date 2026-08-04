@@ -8,6 +8,7 @@ import { Event } from '../events/entities/event.entity';
 import { Announcement } from '../announcements/entities/announcement.entity';
 import { Document } from '../documents/entities/document.entity';
 import { Approval } from '../approvals/entities/approval.entity';
+import { Payment } from '../payments/entities/payment.entity';
 
 @Injectable()
 export class DashboardService {
@@ -22,6 +23,8 @@ export class DashboardService {
     private readonly documentRepository: Repository<Document>,
     @InjectRepository(Approval)
     private readonly approvalRepository: Repository<Approval>,
+    @InjectRepository(Payment)
+    private readonly paymentRepository: Repository<Payment>,
   ) {}
 
   private formatHours(ms: number | null): string {
@@ -65,24 +68,45 @@ export class DashboardService {
       .groupBy('company.origin')
       .getRawMany();
 
+    // =============================================
+    // TEMPOS MÉDIOS DO FUNIL
+    //
+    // 1. Landing → Pagamento     : CREATED → primeiro payments.createdAt
+    // 2. Pagamento → Cadastro    : primeiro payments.createdAt → FINALIZED
+    // 3. Cadastro → Aprovação    : FINALIZED → APPROVED
+    // 4. Landing → Aprovação     : CREATED → APPROVED (total)
+    // =============================================
     const timesRaw = await this.approvalRepository.manager.query(`
       WITH
         created_ts AS (
-          SELECT "companyId", MIN("createdAt") AS ts FROM approvals WHERE action = 'CREATED' GROUP BY "companyId"
+          SELECT "companyId", MIN("createdAt") AS ts
+          FROM approvals WHERE action = 'CREATED'
+          GROUP BY "companyId"
+        ),
+        payment_ts AS (
+          SELECT "companyId", MIN("createdAt") AS ts
+          FROM payments
+          GROUP BY "companyId"
         ),
         finalized_ts AS (
-          SELECT "companyId", MIN("createdAt") AS ts FROM approvals WHERE action = 'FINALIZED' GROUP BY "companyId"
+          SELECT "companyId", MIN("createdAt") AS ts
+          FROM approvals WHERE action = 'FINALIZED'
+          GROUP BY "companyId"
         ),
-        decided_ts AS (
-          SELECT "companyId", MIN("createdAt") AS ts FROM approvals WHERE action IN ('APPROVED','REJECTED') GROUP BY "companyId"
+        approved_ts AS (
+          SELECT "companyId", MIN("createdAt") AS ts
+          FROM approvals WHERE action = 'APPROVED'
+          GROUP BY "companyId"
         )
       SELECT
-        AVG(EXTRACT(EPOCH FROM (f.ts - c.ts)) * 1000) AS landing_to_finalized,
-        AVG(EXTRACT(EPOCH FROM (d.ts - f.ts)) * 1000) AS finalized_to_decided,
-        AVG(EXTRACT(EPOCH FROM (d.ts - c.ts)) * 1000) AS landing_to_decided
+        AVG(EXTRACT(EPOCH FROM (p.ts  - c.ts)) * 1000) AS landing_to_payment,
+        AVG(EXTRACT(EPOCH FROM (f.ts  - p.ts)) * 1000) AS payment_to_finalized,
+        AVG(EXTRACT(EPOCH FROM (a.ts  - f.ts)) * 1000) AS finalized_to_approved,
+        AVG(EXTRACT(EPOCH FROM (a.ts  - c.ts)) * 1000) AS landing_to_approved
       FROM created_ts c
+      LEFT JOIN payment_ts   p ON p."companyId" = c."companyId"
       LEFT JOIN finalized_ts f ON f."companyId" = c."companyId"
-      LEFT JOIN decided_ts d ON d."companyId" = c."companyId"
+      LEFT JOIN approved_ts  a ON a."companyId" = c."companyId"
     `);
 
     const t = timesRaw[0] || {};
@@ -101,9 +125,10 @@ export class DashboardService {
       companySize: companiesBySize,
       origin: companiesByOrigin,
       avgTimes: {
-        landingToFinalized: this.formatHours(Number(t.landing_to_finalized)),
-        finalizedToDecided: this.formatHours(Number(t.finalized_to_decided)),
-        landingToDecided:   this.formatHours(Number(t.landing_to_decided)),
+        landingToPayment:     this.formatHours(Number(t.landing_to_payment)),
+        paymentToFinalized:   this.formatHours(Number(t.payment_to_finalized)),
+        finalizedToApproved:  this.formatHours(Number(t.finalized_to_approved)),
+        landingToApproved:    this.formatHours(Number(t.landing_to_approved)),
       },
     };
   }

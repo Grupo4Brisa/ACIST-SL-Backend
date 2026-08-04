@@ -9,6 +9,7 @@ import { Event } from '../events/entities/event.entity';
 import { Announcement } from '../announcements/entities/announcement.entity';
 import { Document } from '../documents/entities/document.entity';
 import { Approval } from '../approvals/entities/approval.entity';
+import { Payment } from '../payments/entities/payment.entity';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { Approval } from '../approvals/entities/approval.entity';
       Announcement,
       Document,
       Approval,
+      Payment,
     ]),
   ],
   controllers: [DashboardController],
