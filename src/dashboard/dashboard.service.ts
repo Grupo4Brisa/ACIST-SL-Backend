@@ -129,6 +129,46 @@ export class DashboardService {
       cadastros: Number(r.total),
     }));
 
+    // =============================================
+    // ACOMPANHAMENTO — cadastradas vs aprovadas por mês (últimos 6 meses)
+    // =============================================
+    const acompanhamentoRaw = await this.companyRepository.manager.query(`
+      WITH meses AS (
+        SELECT generate_series(
+          DATE_TRUNC('month', NOW()) - INTERVAL '5 months',
+          DATE_TRUNC('month', NOW()),
+          '1 month'
+        ) AS mes
+      ),
+      cadastradas AS (
+        SELECT DATE_TRUNC('month', "createdAt") AS mes, COUNT(*) AS total
+        FROM companies
+        WHERE "createdAt" >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+        GROUP BY DATE_TRUNC('month', "createdAt")
+      ),
+      aprovadas AS (
+        SELECT DATE_TRUNC('month', a."createdAt") AS mes, COUNT(*) AS total
+        FROM approvals a
+        WHERE a.action = 'APPROVED'
+          AND a."createdAt" >= DATE_TRUNC('month', NOW()) - INTERVAL '5 months'
+        GROUP BY DATE_TRUNC('month', a."createdAt")
+      )
+      SELECT
+        TO_CHAR(m.mes, 'YYYY-MM') AS mes,
+        COALESCE(c.total, 0) AS cadastradas,
+        COALESCE(ap.total, 0) AS aprovadas
+      FROM meses m
+      LEFT JOIN cadastradas c  ON c.mes  = m.mes
+      LEFT JOIN aprovadas   ap ON ap.mes = m.mes
+      ORDER BY m.mes
+    `);
+
+    const acompanhamento = acompanhamentoRaw.map((r: any) => ({
+      mes: new Date(r.mes + '-01').toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' }),
+      cadastradas: Number(r.cadastradas),
+      aprovadas:   Number(r.aprovadas),
+    }));
+
     return {
       companies: {
         total: totalCompanies,
@@ -149,6 +189,7 @@ export class DashboardService {
         landingToApproved:   Number(t.landing_to_approved)   || null,
       },
       trend,
+      acompanhamento,
     };
   }
 }
